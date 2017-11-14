@@ -11,8 +11,6 @@ public class Driver {
 
 	public Driver() {
 
-        System.out.println(ByteOrder.nativeOrder());
-
 		try {
 			file = new RandomAccessFile("ext2fs", "r");
 		} catch (FileNotFoundException e) {
@@ -28,13 +26,14 @@ public class Driver {
 
             // Wrap existing byte array to byte buffer
             ByteBuffer byteBuffer = ByteBuffer.wrap(fileInBytes);
-            
-            byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+            byteBuffer.order(ByteOrder.nativeOrder());
+
 
 
             // Obtain block (1024 byte size)
-            byte[] block = this.read(1024*2, 1024);
+            byte[] block = this.read(1024*1, 1024);
             ByteBuffer byteBlockBuffer = ByteBuffer.wrap(block);
+            byteBlockBuffer.order(ByteOrder.nativeOrder());
 
             System.out.print("inode: ");
             int iNode = byteBlockBuffer.getInt();
@@ -45,11 +44,11 @@ public class Driver {
             System.out.println(length);
 
             System.out.print("name len: ");
-            byte nameLen = byteBuffer.get();
+            byte nameLen = byteBlockBuffer.get();
             System.out.println(nameLen);
 
             System.out.print("file type: ");
-            byte fileType = byteBuffer.get();
+            byte fileType = byteBlockBuffer.get();
             System.out.println(fileType);
 
             System.out.print("filename: ");
@@ -79,10 +78,10 @@ public class Driver {
 
         for (int curByte = 0; curByte < length; curByte++) {
 
-            System.out.println("Reading byte: " + curByte + " at byte offset: " + (startByte));
+            //System.out.println("Reading byte: " + curByte + " at byte offset: " + (startByte));
             specifiedBytes[curByte] = fileInBytes[(int)startByte];
             startByte++;
-            System.out.println(specifiedBytes[curByte]);
+            //System.out.println(specifiedBytes[curByte]);
 
         }
 
