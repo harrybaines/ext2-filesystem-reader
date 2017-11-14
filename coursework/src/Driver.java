@@ -29,16 +29,35 @@ public class Driver {
             // Wrap existing byte array to byte buffer
             ByteBuffer byteBuffer = ByteBuffer.wrap(fileInBytes);
             
-            byte[] byteArray = new byte[2048];
+            byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
-            byteBuffer.get(byteArray, 0, 2048);
 
-            this.read(1023, 1024);
+            // Obtain block (1024 byte size)
+            byte[] block = this.read(1024*2, 1024);
+            ByteBuffer byteBlockBuffer = ByteBuffer.wrap(block);
 
-            // for (byte b : byteArray)
-            //     System.out.println(b);
+            System.out.print("inode: ");
+            int iNode = byteBlockBuffer.getInt();
+            System.out.println(iNode);
 
+            System.out.print("length: ");
+            short length = byteBlockBuffer.getShort();
+            System.out.println(length);
+
+            System.out.print("name len: ");
+            byte nameLen = byteBuffer.get();
+            System.out.println(nameLen);
+
+            System.out.print("file type: ");
+            byte fileType = byteBuffer.get();
+            System.out.println(fileType);
+
+            System.out.print("filename: ");
+            for (int i = 8; i < block.length; i++)
+                System.out.print(block[i]);
             System.out.print("\n");
+
+
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -58,13 +77,11 @@ public class Driver {
 
         byte[] specifiedBytes = new byte[(int)length];
 
-        int offset = (int) startByte;
-
         for (int curByte = 0; curByte < length; curByte++) {
 
-            offset++;
-            System.out.println("Reading byte: " + curByte + " at byte offset: " + offset);
-            specifiedBytes[curByte] = fileInBytes[(int)offset];
+            System.out.println("Reading byte: " + curByte + " at byte offset: " + (startByte));
+            specifiedBytes[curByte] = fileInBytes[(int)startByte];
+            startByte++;
             System.out.println(specifiedBytes[curByte]);
 
         }
