@@ -6,124 +6,108 @@ import java.nio.ByteOrder;
 
 public class Driver {
 
-	private static final int BLOCK_SIZE = 1024;
-	private RandomAccessFile file;
-	private byte[] fileInBytes;
-	private ByteBuffer byteBuffer;
+    private static final int BLOCK_SIZE = 1024;
+    
 
-	public Driver() {
+    // magic line - (int) fileInBytes[i] & 0xFF;
 
-		try {
-			file = new RandomAccessFile("ext2fs", "r");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
 
-		// Read text file into byte array
-		try {
-			// Array of 8-bit signed 2s complement integers
-			fileInBytes = new byte[(int) file.length()];
-			file.readFully(fileInBytes);
+    public Driver() {
 
-			// Wrap existing byte array to byte buffer
-			byteBuffer = ByteBuffer.wrap(fileInBytes);
-			byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        // API user will use
+        Volume vol = new Volume("ext2fs");
+        Ext2File file = new Ext2File(vol, "placeholder");
+        //byte buf[ ] = f.read(0L, f.size);
+        //System.out.format ("%s\n", new String(buf));
 
-			// Obtain superblock (1024 byte size)
-			byte[] block = this.read(1 * BLOCK_SIZE, BLOCK_SIZE);
-			ByteBuffer byteBlockBuffer = ByteBuffer.wrap(block);
-			byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
-			
-			// Obtain hex and ASCII values of bytes
-			Helper.dumpHexBytes(block);
-			Helper.printSuperblockInfo(byteBlockBuffer);
+        // Obtain superblock (1024 byte size)
+        byte[] block = file.read(1 * BLOCK_SIZE, BLOCK_SIZE);
+        ByteBuffer byteBlockBuffer = ByteBuffer.wrap(block);
+        byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
-            // Finds the iNode table pointer from group descriptor
-			block = this.read(2 * BLOCK_SIZE, 32);
-			byteBlockBuffer = ByteBuffer.wrap(block);
-			byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
-			int iNodeTblPointer1 = byteBlockBuffer.getInt(8);
-			System.out.println("Group Descriptor: ");
-            Helper.dumpHexBytes(block);
-            System.out.println("iNodeTblPointer: " + iNodeTblPointer1 + " (Block number of first inode table block)\n");
+        System.out.println("Byte 12 in decimal: " + file.getByte(12, byteBlockBuffer));
+        
+        // Obtain hex and ASCII values of bytes
+        Helper.dumpHexBytes(block);
 
-            // Block containing first iNode - block number of first iNode table block
-            block = this.read(iNodeTblPointer1 * BLOCK_SIZE + (128), 128);
-            byteBlockBuffer = ByteBuffer.wrap(block);
-            byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
-            int pointerToFirstDataBlock = byteBlockBuffer.getInt(40);
-            System.out.println("Block containing first iNode: ");
-            Helper.dumpHexBytes(block);
-            System.out.println("Pointer to first data block (from iNode 2): " + pointerToFirstDataBlock + "\n");
+        // Print super block information
+        SuperBlock superBlock = new SuperBlock(vol);
+        superBlock.printSuperblockInfo();
 
-            // Accessing data block in file referenced by iNode 2
-            block = this.read(pointerToFirstDataBlock * BLOCK_SIZE, 1024);
-            byteBlockBuffer = ByteBuffer.wrap(block);
-            byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
-            System.out.println("Data block found using iNode 2 pointer: ");
-            Helper.dumpHexBytes(block);
+        // Finds the iNode table pointer from group descriptor
+        block = file.read(2 * BLOCK_SIZE, 32);
+        byteBlockBuffer = ByteBuffer.wrap(block);
+        byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        int iNodeTblPointer1 = file.getIntFromBytes(8, byteBlockBuffer);
+        System.out.println("Group Descriptor: ");
+        Helper.dumpHexBytes(block);
+        System.out.println("iNodeTblPointer: " + iNodeTblPointer1 + " (Block number of first inode table block)\n");
 
-            // Prints row/entry of a directory
-            int currentLength = 0;
+        // Block containing iNode 2 - 1 iNode offset into the iNode table
+        block = file.read(iNodeTblPointer1 * BLOCK_SIZE + (128), 128);
+        byteBlockBuffer = ByteBuffer.wrap(block);
+        byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        int pointerToFirstDataBlock = file.getIntFromBytes(40, byteBlockBuffer);
+        System.out.println("Block containing iNode 2: ");
+        Helper.dumpHexBytes(block);
+        System.out.println("Pointer to first data block (from iNode 2): " + pointerToFirstDataBlock + "\n");
 
-            while (currentLength < BLOCK_SIZE) {
+        // Prints out data relevant data for iNode 2
+        int fileModeForINode2 = file.getShortFromBytes(0, byteBlockBuffer);
+        System.out.println("File mode for iNode 2: 0x" + String.format("%02X ", fileModeForINode2) + "\n");
 
-                System.out.println("----------");
-                System.out.println("iNode number: " + byteBlockBuffer.getInt(currentLength + 0));
-                System.out.println("length: " + byteBlockBuffer.getShort(currentLength + 4));
-                System.out.println("name len: " + byteBlockBuffer.get(currentLength + 6));
-                System.out.println("file type: " + byteBlockBuffer.get(currentLength + 7));
 
-                byte[] filenameBytes = new byte[byteBlockBuffer.getShort(currentLength + 4) - 6];
-                for (int i = 0; i < byteBlockBuffer.get(currentLength + 6); i++) {
-                    filenameBytes[i] = byteBlockBuffer.get(currentLength + (8+i));
-                }
-                String filenameString = new String(filenameBytes);
-                System.out.println("filename: " + filenameString);
-                System.out.println("----------\n");
+        // Accessing data block in file referenced by iNode 2
+        block = file.read(pointerToFirstDataBlock * BLOCK_SIZE, 1024);
+        byteBlockBuffer = ByteBuffer.wrap(block);
+        byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        System.out.println("Data block found using iNode 2 pointer: ");
+        Helper.dumpHexBytes(block);
 
-                currentLength += byteBlockBuffer.getShort(currentLength + 4);
+        // Prints row/entry of a directory
+        int currentLength = 0;
 
-            }
+        while (currentLength < BLOCK_SIZE) {
 
+            System.out.println("----------");
+            System.out.println("iNode number: " + file.getIntFromBytes(currentLength + 0, byteBlockBuffer));
+            System.out.println("length: " + file.getShortFromBytes(currentLength + 4, byteBlockBuffer));
+            System.out.println("name len: " + file.getByte(currentLength + 6, byteBlockBuffer));
+            System.out.println("file type: " + file.getByte(currentLength + 7, byteBlockBuffer));
             
+            int fileNameLength = file.getShortFromBytes(currentLength + 4, byteBlockBuffer) - 8;
+            System.out.println("filename length: " + fileNameLength);
 
+            // Obtain file name given the filename length
+            byte[] filenameBytes = new byte[fileNameLength];
+            for (int i = 0; i < filenameBytes.length; i++) {
+                filenameBytes[i] = file.getByte((currentLength + (8+i)), byteBlockBuffer);
+            }
+            String filenameString = new String(filenameBytes);
+            System.out.println("filename: " + filenameString);
+            System.out.println("----------\n");
 
+            // Add length to find next entry 'row'
+            currentLength += file.getShortFromBytes(currentLength + 4, byteBlockBuffer);
+        }
 
+        // Example - finding data block referenced by iNode 12 for two-cities
+        // block = file.read(iNodeTblPointer1 * BLOCK_SIZE + (12 * 128), 1024);
+        // byteBlockBuffer = ByteBuffer.wrap(block);
+        // byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        // System.out.println("Data block found using iNode 12 for two-cities: ");
+        // Helper.dumpHexBytes(block);
 
+    }
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+    
 
-	/**
-	 * Reads at most length bytes starting at byte offset startByte from start of
-	 * file. Byte 0 is first byte in the file.
-	 *
-	 * @param startByte The byte to begin reading from in the file.
-	 * @param length The total number of bytes to read.
-	 * @return The array of bytes from the file.
-	 */
-	private byte[] read(long startByte, long length) {
-
-		byte[] specifiedBytes = new byte[(int) length];
-
-		for (int curByte = 0; curByte < length; curByte++) {
-
-			specifiedBytes[curByte] = byteBuffer.get((int) startByte);
-			startByte++;
-
-		}
-		return specifiedBytes;
-	}
-
-	/**
-	 * Main method to begin the driver program.
-	 * 
-	 * @param args Unused.
-	 */
-	public static void main(String[] args) {
-		new Driver();
-	}
+    /**
+     * Main method to begin the driver program.
+     * 
+     * @param args Unused.
+     */
+    public static void main(String[] args) {
+        new Driver();
+    }
 }
