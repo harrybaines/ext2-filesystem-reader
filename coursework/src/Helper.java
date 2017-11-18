@@ -4,8 +4,6 @@ import java.nio.ByteBuffer;
 
 public abstract class Helper {
 
-    
-
     /**
      * This method displays a block as a set of hex and corresponding ASCII values.
      * ASCII codes are printed alongside the hex codes.

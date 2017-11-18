@@ -100,8 +100,6 @@ public class DataBlock {
      * @return File size in bytes.
      */
     public int size() {
-        return 1;
+        return this.vol.getFileInBytes().length;
     }
-
-
 }
