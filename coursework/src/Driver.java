@@ -8,8 +8,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 public class Driver {
-
-    private static final int BLOCK_SIZE = 1024;
     
 
     // magic line - (int) fileInBytes[i] & 0xFF;
@@ -24,7 +22,11 @@ public class Driver {
         //System.out.format ("%s\n", new String(buf));
 
         // Obtain superblock (1024 byte size)
-        byte[] block = file.read(1 * BLOCK_SIZE, BLOCK_SIZE);
+        // Print super block information
+        SuperBlock superBlock = new SuperBlock(vol);
+        superBlock.printSuperblockInfo();
+
+        byte[] block = file.read(1 * superBlock.getBlockSize(), superBlock.getBlockSize());
         ByteBuffer byteBlockBuffer = ByteBuffer.wrap(block);
         byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
         System.out.println("Byte 12 in decimal: " + file.getByte(12, byteBlockBuffer));
@@ -32,15 +34,10 @@ public class Driver {
         // Obtain hex and ASCII values of bytes
         Helper.dumpHexBytes(block);
 
-        // Print super block information
-        SuperBlock superBlock = new SuperBlock(vol);
-        superBlock.printSuperblockInfo();
-        System.out.println("entire size: " + superBlock.size());
-
-
+        
 
         // Finds the iNode table pointer from group descriptor
-        block = file.read(2 * BLOCK_SIZE, 32);
+        block = file.read(2 * superBlock.getBlockSize(), 32);
         byteBlockBuffer = ByteBuffer.wrap(block);
         byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
         int iNodeTblPointer = file.getIntFromBytes(8, byteBlockBuffer);
@@ -49,7 +46,7 @@ public class Driver {
         System.out.println("iNodeTblPointer: " + iNodeTblPointer + " (Block number of first inode table block)\n");
 
         // Block containing iNode 2 - 1 iNode offset into the iNode table
-        block = file.read(iNodeTblPointer * BLOCK_SIZE + (128), 128);
+        block = file.read(iNodeTblPointer * superBlock.getBlockSize() + superBlock.getiNodeSize(), superBlock.getiNodeSize());
         byteBlockBuffer = ByteBuffer.wrap(block);
         byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
         System.out.println("Block containing iNode 2: ");
@@ -92,10 +89,10 @@ public class Driver {
 
 
         // Accessing data block in file referenced by iNode 2
-        block = file.read(firstBlockPointer * BLOCK_SIZE, 1024);
+        block = file.read(firstBlockPointer * superBlock.getBlockSize(), superBlock.getBlockSize());
         byteBlockBuffer = ByteBuffer.wrap(block);
         byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        System.out.println("Data block found using iNode 2 pointer: ");
+        System.out.println("Data block found using iNode 2 pointer (Root Directory): ");
         Helper.dumpHexBytes(block);
 
 
@@ -134,13 +131,12 @@ public class Driver {
         System.out.println(directoryListing+"\n");
 
 
-
-
         // Prints row/entry of a directory
         int currentLength = 0;
 
-        while (currentLength < BLOCK_SIZE) {
+        while (currentLength < superBlock.getBlockSize()) {
 
+            // Print details about current 'row' in the directory
             System.out.println("----------");
             System.out.println("iNode number: " + file.getIntFromBytes(currentLength + 0, byteBlockBuffer));
             System.out.println("length: " + file.getShortFromBytes(currentLength + 4, byteBlockBuffer));
@@ -161,15 +157,28 @@ public class Driver {
         }
 
         // Example - finding data block referenced by iNode 12 for two-cities
-        // block = file.read(iNodeTblPointer1 * BLOCK_SIZE + (12 * 128), 1024);
-        // byteBlockBuffer = ByteBuffer.wrap(block);
-        // byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        // System.out.println("Data block found using iNode 12 for two-cities: ");
-        // Helper.dumpHexBytes(block);
+        block = file.read(iNodeTblPointer * superBlock.getBlockSize() + 11 * superBlock.getiNodeSize(), superBlock.getiNodeSize());
+        ByteBuffer iNode12byteBlockBuffer = ByteBuffer.wrap(block);
+        iNode12byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        System.out.println("iNode 12 info: ");
+        Helper.dumpHexBytes(block);
 
+        int iNode12DataBlockPointer1 = file.getIntFromBytes(40, iNode12byteBlockBuffer);
+        block = file.read(iNode12DataBlockPointer1 * superBlock.getBlockSize(), superBlock.getBlockSize());
+        byteBlockBuffer = ByteBuffer.wrap(block);
+        byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        System.out.println("Data block 1 found using iNode 12: ");
+        Helper.dumpHexBytes(block);
+
+        int iNode12DataBlockPointer2 = file.getIntFromBytes(44, iNode12byteBlockBuffer);
+        block = file.read(iNode12DataBlockPointer2 * superBlock.getBlockSize(), superBlock.getBlockSize());
+        byteBlockBuffer = ByteBuffer.wrap(block);
+        byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        System.out.println("Data block 2 found using iNode 12: ");
+        Helper.dumpHexBytes(block);
+
+        
     }
-
-    
 
     /**
      * Main method to begin the driver program.
