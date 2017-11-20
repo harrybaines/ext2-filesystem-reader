@@ -19,7 +19,6 @@ public class Ext2File extends DataBlock {
     public Ext2File(Volume vol, String fileString) {
         super(vol);
         this.fileString = fileString;  
-
         superBlock = new SuperBlock(vol);
 
         openFile();
@@ -41,7 +40,6 @@ public class Ext2File extends DataBlock {
         int firstiNodeTblPointer = iNodeTablePointers[0];
 
         // Block containing iNode 2 info - 1 iNode offset into the iNode table
-        // Contains bytes for root directory!
         byte[] block = this.read(firstiNodeTblPointer * superBlock.getBlockSize() + superBlock.getiNodeSize(), superBlock.getiNodeSize());
         ByteBuffer rootBuffer = ByteBuffer.wrap(block);
         rootBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -50,16 +48,23 @@ public class Ext2File extends DataBlock {
 
         // Obtains all bytes relevant to iNode2
         int iNodeNumber = 2;
-        INode iNode2 = new INode(iNodeNumber, firstiNodeTblPointer, superBlock);
+        INode iNode2 = new INode(iNodeNumber, firstiNodeTblPointer,  0, superBlock);
         byte[] iNode2InfoBytes = iNode2.getINodeInfoBytes();
         iNode2.printINodeInfo();
 
+        // Get directory bytes pointed to by iNode 2 direct pointer
+        byte[] rootDataBlocks = iNode2.getDataBlocksFromDirectPointers();
+        System.out.println("Root Directory (referenced by iNode 2):");
+        Helper.dumpHexBytes(rootDataBlocks);
+        ByteBuffer dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
+        dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
         // Read iNode 2 using iNode table pointer from the superblock
-        // Directory d = new Directory(rootBuffer, superBlock);
-        // d.getDirectoryInfo();
+        Directory d = new Directory(dirDataBuffer, iNodeTablePointers, superBlock);
+        d.getFileInfo();
+        
 
-
+        System.out.println("File Mode for iNode 2: " + iNode2.getFileModeAsString());
 
 
 
@@ -67,9 +72,10 @@ public class Ext2File extends DataBlock {
 
         // EXAMPLE - finding data block referenced by iNode 12 for two-cities
         iNodeNumber = 12;
-        INode iNode12 = new INode(iNodeNumber, firstiNodeTblPointer, superBlock);
+        INode iNode12 = new INode(iNodeNumber, firstiNodeTblPointer, 0, superBlock);
         byte[] iNode12InfoBytes = iNode12.getINodeInfoBytes();
         iNode12.printINodeInfo();
+        System.out.println("File Mode for iNode 12: " + iNode12.getFileModeAsString());
 
         ByteBuffer iNode12byteBlockBuffer = ByteBuffer.wrap(iNode12InfoBytes);
         iNode12byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);

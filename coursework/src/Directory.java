@@ -10,93 +10,89 @@ import java.text.SimpleDateFormat;
 public class Directory extends DataBlock {
     
     private ByteBuffer directoryByteBuffer;
+    private int[] iNodeTablePointers;
     private SuperBlock superBlock;
 
-    public Directory(ByteBuffer directoryByteBuffer, SuperBlock superBlock) {
+    public Directory(ByteBuffer directoryByteBuffer, int[] iNodeTablePointers, SuperBlock superBlock) {
         super(superBlock.getVolume());
         this.directoryByteBuffer = directoryByteBuffer;
+        this.iNodeTablePointers = iNodeTablePointers;
         this.superBlock = superBlock;
     }
 
-    // public String getNextRowInDirectory(int offsetLength, ByteBuffer byteBlockBuffer) {
+    /**
+     * Method to retrieve an array of strings - each string represents a directory/file in the listing.
+     * Each directory contains relevant information to that directory.
+     * The output is presented in a Unix-like format.
+     *
+     * @return An array of directory strings.
+     */
+    public String getFileInfo() {
 
+        // Prints row/entry of a directory referenced by iNode 2
+        String directoryString = "";
+        int currentLength = 0;
+
+        while (currentLength < directoryByteBuffer.limit()) {
+
+            // Add next 'row' to directory string
+            directoryString += this.getRowAsString(currentLength);
+
+            // Add length to find next entry 'row'
+            currentLength += this.getShortFromBytes(currentLength + 4, directoryByteBuffer);
+        }
         
-    //     System.out.println("Block containing iNode " + iNodeNumber + " (need this to get fields for this iNode):");
-    //     Helper.dumpHexBytes(block);
+        System.out.println("----------");
+        System.out.println("Directory Listing for Root Directory (using iNode 2):");
+        System.out.println("----------");
+        System.out.println(directoryString+"\n");
 
+        return directoryString;
+    }
 
-    //     System.out.println("length: " + this.getShortFromBytes(offsetLength + 4, byteBlockBuffer));
-    //     System.out.println("name len: " + this.getByte(offsetLength + 6, byteBlockBuffer));
-    //     System.out.println("file type: " + this.getByte(offsetLength + 7, byteBlockBuffer));
+    public INode getINodeFromRow(int offset) {
+        int iNodeNumber = this.getIntFromBytes(offset, directoryByteBuffer);
+
+        int tablePointerNum = iNodeNumber / superBlock.getiNodesPerGroup();
+
+        return (new INode(iNodeNumber, iNodeTablePointers[tablePointerNum], tablePointerNum, superBlock));
+    }
+
+    public String getRowAsString(int offset) {
+
+        INode currentINode = getINodeFromRow(offset);
+        currentINode.getINodeInfoBytes();
+
+        System.out.println("length: " + this.getShortFromBytes(offset + 4, directoryByteBuffer));
+        System.out.println("name len: " + this.getByte(offset + 6, directoryByteBuffer));
+        System.out.println("file type: " + this.getByte(offset + 7, directoryByteBuffer));
         
-        
-    //     // Obtain file name given the filename length
-    //     byte[] filenameBytes = new byte[this.getByte(offsetLength + 6, byteBlockBuffer)];
-    //     for (int i = 0; i < filenameBytes.length; i++) {
-    //         filenameBytes[i] = this.getByte((offsetLength + (8+i)), byteBlockBuffer);
-    //     }
-    //     String filenameString = new String(filenameBytes);
-    //     System.out.println("filename: " + filenameString);
-    //     System.out.println("----------\n");
 
+        // Obtain file name given the filename length
+        byte[] filenameBytes = new byte[this.getByte(offset + 6, directoryByteBuffer)];
+        for (int i = 0; i < filenameBytes.length; i++) {
+            filenameBytes[i] = this.getByte((offset + (8+i)), directoryByteBuffer);
+        }
+        String filenameString = new String(filenameBytes);
+        System.out.println("filename: " + filenameString);
+        System.out.println("----------\n");
 
-    //     // Obtain user ID (root etc.)
-    //     String users = "";
-    //     users += (userID == 0) ? "root " : Integer.toString(userID);                 // User ID of owner
-    //     users += (groupIDOfOwner == 0) ? "root" : Integer.toString(groupIDOfOwner);  // Group ID of owner
+        // Obtain user ID (root etc.)
+        String users = "";
+        users += (currentINode.getUserID() == 0) ? "root " : Integer.toString(currentINode.getUserID()) + " ";   // User ID of owner
+        users += (currentINode.getGroupID() == 0) ? "root" : Integer.toString(currentINode.getGroupID());  // Group ID of owner
 
-    //     // Obtain file name given the filename length
-    //     byte[] fileNameBytes = new byte[this.getByte(6,  byteBlockBuffer)];
-    //     for (int i = 0; i < fileNameBytes.length; i++) {
-    //         fileNameBytes[i] = this.getByte(8+i, byteBlockBuffer);
-    //     }
-    //     String filenameStr = new String(fileNameBytes);
+        // Obtain file name given the filename length
+        byte[] fileNameBytes = new byte[this.getByte(6 + offset,  directoryByteBuffer)];
+        for (int i = 0; i < fileNameBytes.length; i++) {
+            fileNameBytes[i] = this.getByte(8+i+offset, directoryByteBuffer);
+        }
+        String filenameStr = new String(fileNameBytes);
 
-    //     // Unix-style directory listing for iNode 2
-    //     String directoryString = /*fileInfo + " " + */users + " " + Integer.toString(numHardLinks) + " " + Integer.toString(fileSize) 
-    //                         + " " + formattedDate + " " + filenameStr + "\n"; 
+        // Unix-style directory listing for iNode 2
+        String rowString = currentINode.getFileModeAsString() + " " + users + " " + Integer.toString(currentINode.getNumHardLinks()) + " " 
+                            + Integer.toString(currentINode.getLowerFileSize()) + " " + currentINode.getLastModifiedTime() + " " + filenameStr + "\n"; 
 
-    //     return directoryString;        
-    // }
-
-
-    // /**
-    //  * Method to retrieve an array of strings - each string represents a directory/file in the listing.
-    //  * Each directory contains relevant information to that directory.
-    //  * The output is presented in a Unix-like format.
-    //  *
-    //  * @return An array of directory strings.
-    //  */
-    // public String getDirectoryInfo() {
-
-    //     // Obtain first direct pointer from iNode 2
-    //     int firstBlockPointer = this.getIntFromBytes(40, directoryByteBuffer);
-
-    //     // Accessing data block in file referenced by iNode 2 (lost+found, big-dir etc)
-    //     byte[] block = this.read(firstBlockPointer * superBlock.getBlockSize(), superBlock.getBlockSize());
-    //     ByteBuffer iNode2DataBlock = ByteBuffer.wrap(block);
-    //     iNode2DataBlock.order(ByteOrder.LITTLE_ENDIAN);
-    //     System.out.println("Data block found using iNode 2 pointer (Root Directory): ");
-    //     Helper.dumpHexBytes(block);
-
-        
-    //     // Prints row/entry of a directory referenced by iNode 2
-    //     String directoryString = "";
-    //     int currentLength = 0;
-
-    //     while (currentLength < superBlock.getBlockSize()) {
-
-    //         directoryString += this.getNextRowInDirectory(currentLength, iNode2DataBlock);
-
-    //         // Add length to find next entry 'row'
-    //         currentLength += this.getShortFromBytes(currentLength + 4, iNode2DataBlock);
-    //     }
-        
-    //     System.out.println("----------");
-    //     System.out.println("Directory Listing for Root Directory (using iNode 2):");
-    //     System.out.println("----------");
-    //     System.out.println(directoryString+"\n");
-
-    //     return directoryString;
-    // }
+        return rowString;
+    }
 }

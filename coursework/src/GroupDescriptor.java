@@ -10,13 +10,11 @@ public class GroupDescriptor extends DataBlock {
 
 	private ByteBuffer groupDescBuffer;
 	private int groupNum;
-	private SuperBlock superBlock;
 	
 	public GroupDescriptor(ByteBuffer groupDescBuffer, int groupNum, SuperBlock superBlock) {
 		super(superBlock.getVolume());
 		this.groupDescBuffer = groupDescBuffer;
 		this.groupNum = groupNum;
-		this.superBlock = superBlock;
 	}
 
 	/**
@@ -33,6 +31,5 @@ public class GroupDescriptor extends DataBlock {
 		int iNodeTblPointer = this.getIntFromBytes(pointerPos, groupDescBuffer);
 
 		return iNodeTblPointer;
-
 	}
 }
