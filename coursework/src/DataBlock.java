@@ -8,6 +8,8 @@ public class DataBlock {
     private Volume vol;                 // Volume reference which this file is part of
     private ByteBuffer byteBuffer;
 
+    // magic line - (int) fileInBytes[i] & 0xFF;
+
 	public DataBlock(Volume vol) {
 
 		this.vol = vol;
@@ -20,6 +22,10 @@ public class DataBlock {
 	public void setByteBuffer(byte[] byteArray) {
 		this.byteBuffer = ByteBuffer.wrap(byteArray);
 		byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+	}
+
+	public Volume getVolume() {
+		return this.vol;
 	}
 
 	/**
@@ -36,11 +42,33 @@ public class DataBlock {
 
         for (int curByte = 0; curByte < length; curByte++) {
 
-            specifiedBytes[curByte] = this.byteBuffer.get((int) startByte); // ******
+            specifiedBytes[curByte] = this.getByte((int) startByte, this.byteBuffer);
             startByte++;
 
         }
         return specifiedBytes;
+    }
+
+    /**
+     * Simple method to print the contents of a file in ASCII format.
+     * A string is returned containing the full file contents.
+     * @return The string of characters in the file.
+     */
+    public String printFileContents(byte[] bytes) {
+
+        String asciiString = "";
+
+        for (byte b : bytes) {
+
+            // Obtain ASCII equivalent of given byte in array
+            int asciiInt = b & 0xFF;
+            
+            if (asciiInt >= 1 && asciiInt < 256)
+                asciiString += (char)asciiInt;
+        
+        }
+
+        return asciiString;
     }
 
 	public ByteBuffer getByteBuffer() {

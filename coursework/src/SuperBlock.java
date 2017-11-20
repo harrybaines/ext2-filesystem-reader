@@ -1,6 +1,7 @@
 package coursework;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public class SuperBlock extends DataBlock {
 
@@ -18,8 +19,23 @@ public class SuperBlock extends DataBlock {
 		this.setSuperblockValues();
 	}
 
+	public void getSuperblockBytes() {
+
+		// Obtain superblock bytes
+        byte[] block = this.read(1 * this.getBlockSize(), this.getBlockSize());
+        ByteBuffer byteBlockBuffer = ByteBuffer.wrap(block);
+        byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        
+        // Obtain hex and ASCII values of bytes in superblock
+        Helper.dumpHexBytes(block);
+	}
+
+	/**
+	 * Obtains all the superblock fields using block group 0.
+	 * Each superblock field can then be accessed when required.
+	 */
 	private void setSuperblockValues() {
-		
+
 		this.blockSize = 1024 * (int) Math.pow(2, this.getByteBuffer().getInt(1024 + 24));
 		this.totalInodes = this.getByteBuffer().getInt(blockSize + 0);
 		this.totalBlocks = this.getByteBuffer().getInt(blockSize + 4);
