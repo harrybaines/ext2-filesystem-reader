@@ -53,6 +53,8 @@ public class Directory extends DataBlock {
     public INode getINodeFromRow(int offset) {
 
         int iNodeNumber = this.getIntFromBytes(offset, directoryByteBuffer);
+        
+        System.out.println("Inode number: " + iNodeNumber);
 
         int tablePointerIndex = iNodeNumber / superBlock.getiNodesPerGroup();
 

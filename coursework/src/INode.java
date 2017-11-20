@@ -19,6 +19,9 @@ public class INode extends DataBlock {
     private int iNodeNumber;
     private SuperBlock superBlock;
 
+    private int iNodeOffset;
+    private byte[] iNodeBytes;
+
     private int fileMode;
 
     public INode(int iNodeNumber, int iNodeTblPointer, int groupNum, SuperBlock superBlock) {
@@ -27,6 +30,14 @@ public class INode extends DataBlock {
         this.iNodeTblPointer = iNodeTblPointer;
         this.groupNum = groupNum;
         this.superBlock = superBlock;
+
+        iNodeOffset = (iNodeTblPointer * superBlock.getBlockSize()) + (((iNodeNumber-1) - (groupNum * superBlock.getiNodesPerGroup())) * superBlock.getiNodeSize());
+
+        iNodeBytes = this.read(iNodeOffset, superBlock.getiNodeSize());
+
+        // Wrap in buffer for later reading
+        iNodeBuffer = ByteBuffer.wrap(iNodeBytes);
+        iNodeBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
 
     /** 
@@ -34,16 +45,7 @@ public class INode extends DataBlock {
      * @return Array of bytes containing the iNode fields.
      */
     public byte[] getINodeInfoBytes() {
-
-        int iNodeOffset = (iNodeTblPointer * superBlock.getBlockSize()) + (((iNodeNumber-1) - (groupNum * superBlock.getiNodesPerGroup())) * superBlock.getiNodeSize());
-
-        byte[] iNodeBytes = this.read(iNodeOffset, superBlock.getiNodeSize());
-
-        // Wrap in buffer for later reading
-        iNodeBuffer = ByteBuffer.wrap(iNodeBytes);
-        iNodeBuffer.order(ByteOrder.LITTLE_ENDIAN);
-
-        return iNodeBytes;
+        return this.iNodeBytes;
     }
 
     /**
@@ -63,6 +65,8 @@ public class INode extends DataBlock {
                     byteList.add(dataBlocksArray[curBlock]);
                 }
             }
+            else 
+                break;
         }
 
         byte[] byteArray = new byte[byteList.size()];

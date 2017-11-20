@@ -50,14 +50,25 @@ public class Ext2File extends DataBlock {
 
         // Obtains all bytes relevant to iNode2
         int iNodeNumber = 2;
-        INode iNode2 = new INode(iNodeNumber, firstiNodeTblPointer,  0, superBlock);
-        byte[] iNode2InfoBytes = iNode2.getINodeInfoBytes();
+        INode iNode2 = new INode(iNodeNumber, firstiNodeTblPointer, 0, superBlock);
         iNode2.printINodeInfo();
 
         // Get directory bytes pointed to by iNode 2 direct pointer
         byte[] rootDataBlocks = iNode2.getDataBlocksFromDirectPointers();
         System.out.println("Root Directory (referenced by iNode 2):");
         Helper.dumpHexBytes(rootDataBlocks);
+
+
+        // NEED WAY TO DETERMINE WHICH INODE THE GROUP IS IN TO DETERMINE WHICH INODE TABLE POINTER TO PASS!
+        INode iNode1722 = new INode(1722, iNodeTablePointers[1], 1, superBlock);
+        iNode1722.printINodeInfo();
+
+        byte[] rootDataBlocks1722 = iNode1722.getDataBlocksFromDirectPointers();
+        System.out.println("Root Directory (referenced by iNode 1722):");
+        Helper.dumpHexBytes(rootDataBlocks1722);
+
+
+
 
         ByteBuffer dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
         dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
