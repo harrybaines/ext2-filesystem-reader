@@ -4,6 +4,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
@@ -27,39 +30,38 @@ public class Directory extends DataBlock {
      *
      * @return An array of directory strings.
      */
-    public String getFileInfo() {
+    public List<String> getFileInfo() {
 
-        // Prints row/entry of a directory referenced by iNode 2
-        String directoryString = "";
+        // Create array of strings to store individual 'row' strings
         int currentLength = 0;
+
+        List<String> directoryStrings = new ArrayList<String>();
 
         while (currentLength < directoryByteBuffer.limit()) {
 
             // Add next 'row' to directory string
-            directoryString += this.getRowAsString(currentLength);
+            directoryStrings.add(this.getRowAsString(currentLength));
 
             // Add length to find next entry 'row'
             currentLength += this.getShortFromBytes(currentLength + 4, directoryByteBuffer);
-        }
-        
-        System.out.println("----------");
-        System.out.println("Directory Listing for Root Directory (using iNode 2):");
-        System.out.println("----------");
-        System.out.println(directoryString+"\n");
 
-        return directoryString;
+        }
+
+        return directoryStrings;
     }
 
     public INode getINodeFromRow(int offset) {
+
         int iNodeNumber = this.getIntFromBytes(offset, directoryByteBuffer);
 
-        int tablePointerNum = iNodeNumber / superBlock.getiNodesPerGroup();
+        int tablePointerIndex = iNodeNumber / superBlock.getiNodesPerGroup();
 
-        return (new INode(iNodeNumber, iNodeTablePointers[tablePointerNum], tablePointerNum, superBlock));
+        return (new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock));
     }
 
     public String getRowAsString(int offset) {
 
+        // Obtain iNode information at current row
         INode currentINode = getINodeFromRow(offset);
         currentINode.getINodeInfoBytes();
 
@@ -91,7 +93,7 @@ public class Directory extends DataBlock {
 
         // Unix-style directory listing for iNode 2
         String rowString = currentINode.getFileModeAsString() + " " + users + " " + Integer.toString(currentINode.getNumHardLinks()) + " " 
-                            + Integer.toString(currentINode.getLowerFileSize()) + " " + currentINode.getLastModifiedTime() + " " + filenameStr + "\n"; 
+                            + Integer.toString(currentINode.getLowerFileSize()) + " " + currentINode.getLastModifiedTime() + " " + filenameStr; 
 
         return rowString;
     }

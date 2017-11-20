@@ -35,13 +35,7 @@ public class INode extends DataBlock {
      */
     public byte[] getINodeInfoBytes() {
 
-        // NOT WORKING?
-        System.out.println("iNode number: " + iNodeNumber);
-        System.out.println("iNode table pointer: " + iNodeTblPointer);
-        System.out.println("Starting byte: " + (((iNodeNumber - (superBlock.getiNodesPerGroup() * groupNum)) + iNodeTblPointer) - 1));
-
-        int iNodeOffset = (iNodeTblPointer * superBlock.getBlockSize()) + ((iNodeNumber-1) * superBlock.getiNodeSize());
-        System.out.println("iNode byte offset: " + iNodeOffset);
+        int iNodeOffset = (iNodeTblPointer * superBlock.getBlockSize()) + (((iNodeNumber-1) - (groupNum * superBlock.getiNodesPerGroup())) * superBlock.getiNodeSize());
 
         byte[] iNodeBytes = this.read(iNodeOffset, superBlock.getiNodeSize());
 
@@ -126,7 +120,7 @@ public class INode extends DataBlock {
 
         // Obtain file mode read/write/execute permissions string
         String fileInfo = "";
-        fileInfo += ((fileMode & hexCodes[0]) > 0) ? "d" : "-";  // Directory
+        fileInfo += ((fileMode & 0x4000) > 0) ? "d" : "-";  // Directory or File
 
         for (int i = 0; i < hexCodes.length; i++)
             fileInfo += ((fileMode & hexCodes[i]) > 0) ? permissions[i % permissions.length] : "-";

@@ -1,6 +1,9 @@
 package coursework;
 
 import java.io.*;
+
+import java.util.List;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -20,7 +23,6 @@ public class Ext2File extends DataBlock {
         super(vol);
         this.fileString = fileString;  
         superBlock = new SuperBlock(vol);
-
         openFile();
     }
 
@@ -56,17 +58,20 @@ public class Ext2File extends DataBlock {
         byte[] rootDataBlocks = iNode2.getDataBlocksFromDirectPointers();
         System.out.println("Root Directory (referenced by iNode 2):");
         Helper.dumpHexBytes(rootDataBlocks);
+
         ByteBuffer dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
         dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
         // Read iNode 2 using iNode table pointer from the superblock
         Directory d = new Directory(dirDataBuffer, iNodeTablePointers, superBlock);
-        d.getFileInfo();
+        List<String> directoryStrings = d.getFileInfo();
         
-
-        System.out.println("File Mode for iNode 2: " + iNode2.getFileModeAsString());
-
-
+        System.out.println("\n----------");
+        System.out.println("Directory Listing for Root Directory (using iNode 2):");
+        System.out.println("----------");
+        for (String row : directoryStrings)
+            System.out.println(row);
+        System.out.println("----------\n");
 
 
 
@@ -112,11 +117,11 @@ public class Ext2File extends DataBlock {
 
         // Obtains array of iNode table pointers from all group descriptors
         int numBlockGroups = (int) Math.ceil((double) superBlock.getTotalBlocks() / (double) superBlock.getBlocksPerGroup());
-       
+
         GroupDescriptor[] groupDescs = new GroupDescriptor[numBlockGroups];
         int[] iNodeTablePointers = new int[numBlockGroups];
 
-        // Finds the iNode table pointer from group descriptor in block group 0 (1024 bytes after superblock)
+        // Finds the group descriptors using block group 0 (1024 bytes after superblock)
         byte[] groupDescBytes = this.read(2 * superBlock.getBlockSize(), numBlockGroups * GroupDescriptor.GROUP_DESCRIPTOR_SIZE);
         ByteBuffer groupDescBuffer = ByteBuffer.wrap(groupDescBytes);
         groupDescBuffer.order(ByteOrder.LITTLE_ENDIAN);
