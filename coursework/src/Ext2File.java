@@ -3,6 +3,7 @@ package coursework;
 import java.io.*;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,6 +14,8 @@ public class Ext2File extends DataBlock {
     private SuperBlock superBlock;      // Reference to the superblock
 
     private int[] iNodeTablePointers;
+
+    private ByteBuffer dirDataBuffer;
 
     /**
      * Constructor used to represent a file in the given volume.
@@ -36,6 +39,22 @@ public class Ext2File extends DataBlock {
         openFile();
     }
 
+    public ByteBuffer getDirDataBuffer() {
+        return this.dirDataBuffer;
+    }
+
+    public int[] getiNodeTablePointers() {
+        return this.iNodeTablePointers;
+    }
+
+    public SuperBlock getSuperblock() {
+        return this.superBlock;
+    }
+
+    public String getFileString() {
+        return this.fileString;
+    }
+
     public byte[] getRootDirBytes() {
 
         // Obtains all bytes relevant to iNode2 (root directory)
@@ -48,51 +67,35 @@ public class Ext2File extends DataBlock {
         return rootDataBlocks;
     }
 
-    
+    /**
+     * Simple method to print the contents of a file in ASCII format.
+     * A string is returned containing the full file contents.
+     * @return The string of characters in the file.
+     */
+    public String printFileContents(byte[] bytes) {
 
-    public void openFile() {
+        String asciiString = "";
 
-        // Get directory bytes pointed to by iNode 2 direct pointer
-        byte[] rootDataBlocks = getRootDirBytes();
-        System.out.println("Root Directory (referenced by iNode 2):");
-        Helper.dumpHexBytes(rootDataBlocks);
+        for (byte b : bytes) {
 
+            // Obtain ASCII equivalent of given byte in array
+            int asciiInt = b & 0xFF;
+            
+            if (asciiInt >= 1 && asciiInt < 256)
+                asciiString += (char)asciiInt;
+        }
+        return asciiString;
+    }
 
-        // Obtain iNode 1722 info and directory it points to
-        int iNodeNumber = 1722;
-        int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
-        INode iNode1722 = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
-        iNode1722.printINodeInfo();
+    // public long size() {
+    //     return this.size;
+    // }
 
-        byte[] rootDataBlocks1722 = iNode1722.getDataBlocksFromDirectPointers();
-        System.out.println("Root Directory (referenced by iNode 1722):");
-        Helper.dumpHexBytes(rootDataBlocks1722);
-
-
-
-
-        ByteBuffer dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
-        dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
-
-        // Read iNode 2 using iNode table pointer from the superblock
-        Directory d = new Directory(dirDataBuffer, iNodeTablePointers, superBlock);
-        List<String> directoryStrings = d.getFileInfo();
-        
-        System.out.println("\n----------");
-        System.out.println("Directory Listing for Root Directory (using iNode 2):");
-        System.out.println("----------");
-        for (String row : directoryStrings)
-            System.out.println(row);
-        System.out.println("----------\n");
-
-
-
-
-
+    public byte[] readFile(long startByte, long length) {
 
         // EXAMPLE - finding data block referenced by iNode 12 for two-cities
-        iNodeNumber = 12;
-        tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
+        int iNodeNumber = 12;
+        int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
         INode iNode12 = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
         byte[] iNode12InfoBytes = iNode12.getINodeInfoBytes();
         iNode12.printINodeInfo();
@@ -101,18 +104,60 @@ public class Ext2File extends DataBlock {
         iNode12byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
 
+
+        // WORK ON THIS
         // Obtain iNode 12 first direct pointer
+        List<Byte> dataBytes = new ArrayList<Byte>();
+
         int iNode12DataBlockPointer1 = this.getIntFromBytes(40, iNode12byteBlockBuffer);
         byte[] block1 = this.read(iNode12DataBlockPointer1 * superBlock.getBlockSize(), superBlock.getBlockSize());
+
+        for (byte b : block1)
+            dataBytes.add(b);
 
         // Obtain iNode 12 second direct pointer
         int iNode12DataBlockPointer2 = this.getIntFromBytes(44, iNode12byteBlockBuffer);
         byte[] block2 = this.read(iNode12DataBlockPointer2 * superBlock.getBlockSize(), superBlock.getBlockSize());
 
+        for (byte b : block2)
+            dataBytes.add(b);
+
         // Print all file contents for iNode 12
-        System.out.println("File contents pointed to by iNode 12:");
-        System.out.println("----------");
-        System.out.println(this.printFileContents(block1) + this.printFileContents(block2) + "\n");
+        // System.out.println("File contents pointed to by iNode 12:");
+        // System.out.println("----------");
+        // System.out.println(this.printFileContents(block1) + this.printFileContents(block2) + "\n");
+        byte[] byteArray = new byte[dataBytes.size()];
+        int index = 0;
+        for (byte b : dataBytes)
+            byteArray[index++] = b;
+
+
+
+        return byteArray;
+    }
+
+    public void openFile() {
+
+        // Get directory bytes pointed to by iNode 2 direct pointer
+        byte[] rootDataBlocks = getRootDirBytes();
+        System.out.println("Root Directory (referenced by iNode 2):");
+        Helper.dumpHexBytes(rootDataBlocks);
+
+        // SORT OUT? - iNode 2 only (root directory)
+        dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
+        dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+
+
+        // EXAMPLE Obtain iNode 1722 info and directory it points to
+        int iNodeNumber = 1722;
+        int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
+        INode iNode1722 = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
+        iNode1722.printINodeInfo();
+
+        byte[] rootDataBlocks1722 = iNode1722.getDataBlocksFromDirectPointers();
+        System.out.println("Root Directory (referenced by iNode 1722):");
+        Helper.dumpHexBytes(rootDataBlocks1722);
     }
 
     /**

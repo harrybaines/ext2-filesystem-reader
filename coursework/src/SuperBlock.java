@@ -46,7 +46,7 @@ public class SuperBlock extends DataBlock {
         this.volumeLbl = "";
 
         for (int i = 0; i < 16; i++) {
-            int asciiInt = this.getByteBuffer().get(blockSize + 120 + i) & 0xFF;
+            int asciiInt = this.getByteBuffer().get(blockSize + 120 + i);
             volumeLbl += (char) asciiInt;
         }
     }

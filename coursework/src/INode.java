@@ -185,7 +185,7 @@ public class INode extends DataBlock {
     public String getDeletedTime() {
         int delTime = this.getIntFromBytes(20, iNodeBuffer);
         String deletedTime = (delTime == 0) ? "-" : new Date( (long) delTime * 1000 ).toString();
-        return(deletedTime);
+        return (deletedTime);
     }
 
     /**

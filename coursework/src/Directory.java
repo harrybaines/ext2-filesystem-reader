@@ -12,15 +12,18 @@ import java.text.SimpleDateFormat;
 
 public class Directory extends DataBlock {
     
-    private ByteBuffer directoryByteBuffer;
+    private Ext2File file;
+
+    private ByteBuffer dirDataBuffer;
     private int[] iNodeTablePointers;
     private SuperBlock superBlock;
 
-    public Directory(ByteBuffer directoryByteBuffer, int[] iNodeTablePointers, SuperBlock superBlock) {
-        super(superBlock.getVolume());
-        this.directoryByteBuffer = directoryByteBuffer;
-        this.iNodeTablePointers = iNodeTablePointers;
-        this.superBlock = superBlock;
+    public Directory(Ext2File file) {
+        super(file.getVolume());
+        this.file = file;
+        this.dirDataBuffer = file.getDirDataBuffer();
+        this.iNodeTablePointers = file.getiNodeTablePointers();
+        this.superBlock = file.getSuperblock();
     }
 
     /**
@@ -37,16 +40,28 @@ public class Directory extends DataBlock {
 
         List<String> directoryStrings = new ArrayList<String>();
 
-        while (currentLength < directoryByteBuffer.limit()) {
+        while (currentLength < dirDataBuffer.limit()) {
 
             // Add next 'row' to directory string
             directoryStrings.add(this.getRowAsString(currentLength));
 
             // Add length to find next entry 'row'
-            currentLength += this.getShortFromBytes(currentLength + 4, directoryByteBuffer);
+            currentLength += this.getShortFromBytes(currentLength + 4, dirDataBuffer);
 
         }
         return directoryStrings;
+    }
+
+    public void printDirectoryInfo() {
+
+        List<String> directoryStrings = getFileInfo();
+        
+        System.out.println("\n----------");
+        System.out.println("Directory Listing for Root Directory (using iNode 2):");
+        System.out.println("----------");
+        for (String row : directoryStrings)
+            System.out.println(row);
+        System.out.println("----------\n");
     }
 
 
@@ -56,19 +71,19 @@ public class Directory extends DataBlock {
         INode currentINode = getINodeFromRow(offset);
         currentINode.getINodeInfoBytes();
 
-        System.out.println("length: " + this.getShortFromBytes(offset + 4, directoryByteBuffer));
-        System.out.println("name len: " + this.getByte(offset + 6, directoryByteBuffer));
-        System.out.println("file type: " + this.getByte(offset + 7, directoryByteBuffer));
+        // System.out.println("length: " + this.getShortFromBytes(offset + 4, dirDataBuffer));
+        // System.out.println("name len: " + this.getByte(offset + 6, dirDataBuffer));
+        // System.out.println("file type: " + this.getByte(offset + 7, dirDataBuffer));
         
 
         // Obtain file name given the filename length
-        byte[] filenameBytes = new byte[this.getByte(offset + 6, directoryByteBuffer)];
+        byte[] filenameBytes = new byte[this.getByte(offset + 6, dirDataBuffer)];
         for (int i = 0; i < filenameBytes.length; i++) {
-            filenameBytes[i] = this.getByte((offset + (8+i)), directoryByteBuffer);
+            filenameBytes[i] = this.getByte((offset + (8+i)), dirDataBuffer);
         }
         String filenameString = new String(filenameBytes);
-        System.out.println("filename: " + filenameString);
-        System.out.println("----------\n");
+        // System.out.println("filename: " + filenameString);
+        // System.out.println("----------\n");
 
         // Obtain user ID (root etc.)
         String users = "";
@@ -76,9 +91,9 @@ public class Directory extends DataBlock {
         users += (currentINode.getGroupID() == 0) ? "root" : Integer.toString(currentINode.getGroupID());        // Group ID of owner
 
         // Obtain file name given the filename length
-        byte[] fileNameBytes = new byte[this.getByte(6 + offset,  directoryByteBuffer)];
+        byte[] fileNameBytes = new byte[this.getByte(6 + offset,  dirDataBuffer)];
         for (int i = 0; i < fileNameBytes.length; i++) {
-            fileNameBytes[i] = this.getByte(8+i+offset, directoryByteBuffer);
+            fileNameBytes[i] = this.getByte(8+i+offset, dirDataBuffer);
         }
         String filenameStr = new String(fileNameBytes);
 
@@ -91,7 +106,7 @@ public class Directory extends DataBlock {
 
     public INode getINodeFromRow(int offset) {
 
-        int iNodeNumber = this.getIntFromBytes(offset, directoryByteBuffer);
+        int iNodeNumber = this.getIntFromBytes(offset, dirDataBuffer);
 
         int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
 

@@ -50,28 +50,6 @@ public class DataBlock {
     }
 
     /**
-     * Simple method to print the contents of a file in ASCII format.
-     * A string is returned containing the full file contents.
-     * @return The string of characters in the file.
-     */
-    public String printFileContents(byte[] bytes) {
-
-        String asciiString = "";
-
-        for (byte b : bytes) {
-
-            // Obtain ASCII equivalent of given byte in array
-            int asciiInt = b & 0xFF;
-            
-            if (asciiInt >= 1 && asciiInt < 256)
-                asciiString += (char)asciiInt;
-        
-        }
-
-        return asciiString;
-    }
-
-    /**
      * Method to obtain the group number the iNode belongs to and the index in the array of iNode table pointers.
      * The correct iNode table pointer can then be used to find the iNode required.
      * E.g. A table index of 2 indicates the iNode exists in block group 2 and index 2 of the iNode table pointers is the table pointer to use.
@@ -145,10 +123,10 @@ public class DataBlock {
 
 
     /**
-     * Method to obtain the size of the file in bytes.
-     * @return File size in bytes.
+     * Method to obtain the size of the filesystem in bytes.
+     * @return Filesystem size in bytes.
      */
-    public int size() {
+    public int fileSystemSize() {
         return this.vol.getFileInBytes().length;
     }
 }
