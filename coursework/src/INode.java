@@ -41,7 +41,7 @@ public class INode extends DataBlock {
     }
 
     /** 
-     * Method to obtain a particular iNode's fields.
+     * Method to obtain all iNode fields.
      * @return Array of bytes containing the iNode fields.
      */
     public byte[] getINodeInfoBytes() {

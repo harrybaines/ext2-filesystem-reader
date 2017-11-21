@@ -46,20 +46,9 @@ public class Directory extends DataBlock {
             currentLength += this.getShortFromBytes(currentLength + 4, directoryByteBuffer);
 
         }
-
         return directoryStrings;
     }
 
-    public INode getINodeFromRow(int offset) {
-
-        int iNodeNumber = this.getIntFromBytes(offset, directoryByteBuffer);
-        
-        System.out.println("Inode number: " + iNodeNumber);
-
-        int tablePointerIndex = iNodeNumber / superBlock.getiNodesPerGroup();
-
-        return (new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock));
-    }
 
     public String getRowAsString(int offset) {
 
@@ -84,7 +73,7 @@ public class Directory extends DataBlock {
         // Obtain user ID (root etc.)
         String users = "";
         users += (currentINode.getUserID() == 0) ? "root " : Integer.toString(currentINode.getUserID()) + " ";   // User ID of owner
-        users += (currentINode.getGroupID() == 0) ? "root" : Integer.toString(currentINode.getGroupID());  // Group ID of owner
+        users += (currentINode.getGroupID() == 0) ? "root" : Integer.toString(currentINode.getGroupID());        // Group ID of owner
 
         // Obtain file name given the filename length
         byte[] fileNameBytes = new byte[this.getByte(6 + offset,  directoryByteBuffer)];
@@ -98,5 +87,14 @@ public class Directory extends DataBlock {
                             + Integer.toString(currentINode.getLowerFileSize()) + " " + currentINode.getLastModifiedTime() + " " + filenameStr; 
 
         return rowString;
+    }
+
+    public INode getINodeFromRow(int offset) {
+
+        int iNodeNumber = this.getIntFromBytes(offset, directoryByteBuffer);
+
+        int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
+
+        return (new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock));
     }
 }
