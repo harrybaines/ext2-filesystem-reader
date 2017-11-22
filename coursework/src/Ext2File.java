@@ -213,19 +213,7 @@ public class Ext2File extends DataBlock {
             //     return false;
             // }
         }
-
-
-
-
-        // EXAMPLE Obtain iNode 1722 info and directory it points to
-        int iNodeNumber = 1722;
-        int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
-        INode iNode1722 = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
-
-        byte[] rootDataBlocks1722 = getDirBytes(iNodeNumber);
-        System.out.println("EXAMPLE Directory referenced by iNode 1722:");
-        Helper.dumpHexBytes(rootDataBlocks1722);
-
+        
         return true;
     }
 
