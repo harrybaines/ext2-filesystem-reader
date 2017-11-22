@@ -24,6 +24,8 @@ public abstract class Helper {
             String asciiString = "";
             
             for (int i = 0; i < 16; i++) {
+
+                // add XX entries for too few bytes
             
                 // Obtain hex equivalent of given byte in array     
                 sb.append(String.format("%02X ", bytes[count]));

@@ -17,6 +17,10 @@ public class Ext2File extends DataBlock {
 
     private ByteBuffer dirDataBuffer;
 
+    private String curDirString;
+
+    private int charCount;
+
     /**
      * Constructor used to represent a file in the given volume.
      * The file can then be read and output to the user and can also view important info.
@@ -34,6 +38,8 @@ public class Ext2File extends DataBlock {
 
         // Array containing all iNode table pointers
         iNodeTablePointers = getAllINodeTblPointers();
+
+        charCount = 0;
 
         System.out.println("File String: " + fileString);
         openFile();
@@ -55,15 +61,19 @@ public class Ext2File extends DataBlock {
         return this.fileString;
     }
 
-    public byte[] getRootDirBytes() {
+    public String getCurrentDirectoryString() {
+        return this.curDirString;
+    }
+
+    public byte[] getDirBytes(int iNodeNumber) {
 
         // Obtains all bytes relevant to iNode2 (root directory)
-        int iNodeNumber = 2;
         int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
         INode iNode2 = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
         iNode2.printINodeInfo();
 
         byte[] rootDataBlocks = iNode2.getDataBlocksFromDirectPointers();
+        Helper.dumpHexBytes(iNode2.getINodeInfoBytes());
         return rootDataBlocks;
     }
 
@@ -136,16 +146,77 @@ public class Ext2File extends DataBlock {
         return byteArray;
     }
 
-    public void openFile() {
+    public String getCurDirectoryString() {
+
+        // Obtain individual dircetory names from fileString
+        curDirString = "";
+        String fileString = getFileString();
+        int beginCount = 0;
+        int slashCount = 0;
+
+        while (true) {
+
+            if (charCount >= fileString.length()) 
+                break;
+
+            if (fileString.charAt(charCount) == '/') {
+                slashCount++;
+                beginCount++;
+                if (slashCount == 2) {
+                    break;
+                }
+            }
+
+            if (fileString.charAt(charCount) != '/')
+                curDirString += fileString.charAt(charCount);
+
+            charCount++;
+
+            beginCount++;
+
+        }
+
+        return curDirString;
+    }
+
+    public String getCurrentDirString() {
+        return this.curDirString;
+    }
+
+    public boolean openFile() {
 
         // Get directory bytes pointed to by iNode 2 direct pointer
-        byte[] rootDataBlocks = getRootDirBytes();
+        byte[] rootDataBlocks = getDirBytes(2);
         System.out.println("Root Directory (referenced by iNode 2):");
         Helper.dumpHexBytes(rootDataBlocks);
 
-        // SORT OUT? - iNode 2 only (root directory)
+        // iNode 2 only (root directory)
         dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
         dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+
+        curDirString = getCurDirectoryString();
+        System.out.println("Next: " + curDirString);
+        
+        // System.out.println("Next: " + getCurDirectoryString());
+        // System.out.println("Next: " + getCurDirectoryString());
+        // System.out.println("Next: " + getCurDirectoryString());
+        // System.out.println("Next: " + getCurDirectoryString());
+        // System.out.println("Next: " + getCurDirectoryString());
+        // System.out.println("Next: " + getCurDirectoryString());
+        // System.out.println("Next: " + getCurDirectoryString());
+        // System.out.println("Next: " + getCurDirectoryString());
+
+
+        // Get root directory of bytes (using iNode 2)
+
+        // WHILE YOU HAVENT GOT TO THE LENGTH OF THE FILE STRING
+                        // Get directory array of bytes (deep, files, lost+found, big-dir etc.)
+            // Find directory from the file string in the root directory (deep)
+            // If it is found, get iNode for deep (1722)
+            // -loop-
+
+
 
 
 
@@ -155,9 +226,11 @@ public class Ext2File extends DataBlock {
         INode iNode1722 = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
         iNode1722.printINodeInfo();
 
-        byte[] rootDataBlocks1722 = iNode1722.getDataBlocksFromDirectPointers();
+        byte[] rootDataBlocks1722 = getDirBytes(iNodeNumber);
         System.out.println("Root Directory (referenced by iNode 1722):");
         Helper.dumpHexBytes(rootDataBlocks1722);
+
+        return true;
     }
 
     /**

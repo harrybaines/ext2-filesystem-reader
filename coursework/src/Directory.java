@@ -18,12 +18,25 @@ public class Directory extends DataBlock {
     private int[] iNodeTablePointers;
     private SuperBlock superBlock;
 
+    private boolean fileFoundInDirectory;
+
+    private INode iNodeForDirToSearch;
+
     public Directory(Ext2File file) {
         super(file.getVolume());
         this.file = file;
         this.dirDataBuffer = file.getDirDataBuffer();
         this.iNodeTablePointers = file.getiNodeTablePointers();
         this.superBlock = file.getSuperblock();
+        this.fileFoundInDirectory = false;
+    }
+
+    public boolean fileWasFoundInDirectory() {
+        return this.fileFoundInDirectory;
+    }
+
+    public INode getINodeOfNextDirectory() {
+        return this.iNodeForDirToSearch;
     }
 
     /**
@@ -62,6 +75,7 @@ public class Directory extends DataBlock {
         for (String row : directoryStrings)
             System.out.println(row);
         System.out.println("----------\n");
+
     }
 
 
@@ -71,9 +85,11 @@ public class Directory extends DataBlock {
         INode currentINode = getINodeFromRow(offset);
         currentINode.getINodeInfoBytes();
 
-        // System.out.println("length: " + this.getShortFromBytes(offset + 4, dirDataBuffer));
-        // System.out.println("name len: " + this.getByte(offset + 6, dirDataBuffer));
-        // System.out.println("file type: " + this.getByte(offset + 7, dirDataBuffer));
+        System.out.println("Current iNode: " + currentINode.getINodeNumber());
+
+        System.out.println("length: " + this.getShortFromBytes(offset + 4, dirDataBuffer));
+        System.out.println("name len: " + this.getByte(offset + 6, dirDataBuffer));
+        System.out.println("file type: " + this.getByte(offset + 7, dirDataBuffer));
         
 
         // Obtain file name given the filename length
@@ -82,8 +98,22 @@ public class Directory extends DataBlock {
             filenameBytes[i] = this.getByte((offset + (8+i)), dirDataBuffer);
         }
         String filenameString = new String(filenameBytes);
-        // System.out.println("filename: " + filenameString);
-        // System.out.println("----------\n");
+        System.out.println("filename: " + filenameString);
+        System.out.println("----------");
+
+
+
+
+
+        // Check if fileName is equal to the current file you should be looking for
+        if (filenameString.equals(file.getCurrentDirString())) {
+            System.out.println("FOUND deep!");
+            System.out.println("Next iNode to use: " + currentINode.getINodeNumber());
+            fileFoundInDirectory = true;
+        }
+
+
+
 
         // Obtain user ID (root etc.)
         String users = "";

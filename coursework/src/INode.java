@@ -40,6 +40,10 @@ public class INode extends DataBlock {
         iNodeBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
 
+    public int getINodeNumber() {
+        return this.iNodeNumber;
+    }
+
     /** 
      * Method to obtain all iNode fields.
      * @return Array of bytes containing the iNode fields.

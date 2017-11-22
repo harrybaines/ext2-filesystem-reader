@@ -17,6 +17,8 @@ public class SuperBlock extends DataBlock {
     public SuperBlock(Volume vol) {
         super(vol);
         this.setSuperblockValues();
+
+        getSuperblockBytes();
     }
 
     public void getSuperblockBytes() {
