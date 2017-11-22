@@ -42,7 +42,10 @@ public class Ext2File extends DataBlock {
         charCount = 0;
 
         System.out.println("File String: " + fileString);
-        openFile();
+        if (openFile())
+            System.out.println("File opened successfully!\n\n");
+        else
+            System.out.println("Sorry, couldn't find that file.\n\n");
     }
 
     public ByteBuffer getDirDataBuffer() {
@@ -73,7 +76,6 @@ public class Ext2File extends DataBlock {
         iNode2.printINodeInfo();
 
         byte[] rootDataBlocks = iNode2.getDataBlocksFromDirectPointers();
-        Helper.dumpHexBytes(iNode2.getINodeInfoBytes());
         return rootDataBlocks;
     }
 
@@ -184,46 +186,43 @@ public class Ext2File extends DataBlock {
 
         // Get directory bytes pointed to by iNode 2 direct pointer
         byte[] rootDataBlocks = getDirBytes(2);
-        System.out.println("Root Directory (referenced by iNode 2):");
+        System.out.println("Directory referenced by iNode 2:");
         Helper.dumpHexBytes(rootDataBlocks);
         dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);    
         dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
-        // Prints directory contents of the file passed in
+        // Finds the directory specified in the file path string
         while ((curDirString = getCurDirectoryString()) != "") {
 
-            System.out.println("Current directory string: " + curDirString);
+            System.out.println("Current directory string to look through: " + curDirString + "\n");
 
             Directory d = new Directory(this);
             d.getFileInfo();
 
-            System.out.println("DIRECTORY INFO FOR INODE " + d.getNextINode().getINodeNumber());
-            d.printDirectoryInfo();
-
-            rootDataBlocks = getDirBytes(d.getNextINode().getINodeNumber());
-            System.out.println("Root Directory (referenced by iNode "+d.getNextINode().getINodeNumber()+"):");
-            Helper.dumpHexBytes(rootDataBlocks);
-            dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
-            dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
+            // Check to see if current directory using the file path string actually exists!
+            INode nextINode = d.getNextINode();
+            if (nextINode != null) {
+                rootDataBlocks = getDirBytes(d.getNextINode().getINodeNumber());
+                System.out.println("Directory referenced by iNode " + d.getNextINode().getINodeNumber() + ":");
+                Helper.dumpHexBytes(rootDataBlocks);
+                dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
+                dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
+            }
+            else {
+                return false;
+            }
         }
 
-        // System.out.println("Next: " + getCurDirectoryString());
-        // System.out.println("Next: " + getCurDirectoryString());
-        // System.out.println("Next: " + getCurDirectoryString());
-        // System.out.println("Next: " + getCurDirectoryString());
-        // System.out.println("Next: " + getCurDirectoryString());
-        // System.out.println("Next: " + getCurDirectoryString());
-        // System.out.println("Next: " + getCurDirectoryString());
-        // System.out.println("Next: " + getCurDirectoryString());
+
+
 
         // EXAMPLE Obtain iNode 1722 info and directory it points to
         int iNodeNumber = 1722;
         int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
         INode iNode1722 = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
-        iNode1722.printINodeInfo();
 
         byte[] rootDataBlocks1722 = getDirBytes(iNodeNumber);
-        System.out.println("Root Directory (referenced by iNode 1722):");
+        System.out.println("EXAMPLE Directory referenced by iNode 1722:");
         Helper.dumpHexBytes(rootDataBlocks1722);
 
         return true;

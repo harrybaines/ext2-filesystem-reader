@@ -84,7 +84,7 @@ public class Directory extends DataBlock {
         // Obtain iNode information at current row
         INode currentINode = getINodeFromRow(offset);
 
-        System.out.println("Inode " + currentINode.getINodeNumber() + " info bytes:");
+        System.out.println("Currently looking at " + currentINode.getINodeNumber() + " in the directory listing.");
         currentINode.getINodeInfoBytes();
 
         // System.out.println("Current iNode: " + currentINode.getINodeNumber());
@@ -103,10 +103,9 @@ public class Directory extends DataBlock {
         // System.out.println("filename: " + filenameString);
         // System.out.println("----------");
 
-        // System.out.println("file.getNextDirectoryString() = " + file.getNextDirectoryString());
-        if (filenameString.equals(file.getNextDirectoryString())) {
+        // Find the file you're supposed to search for in the current directory listing
+        if (filenameString.equals(file.getNextDirectoryString()))
             this.nextINode = currentINode;
-        }
 
         // Obtain user ID (root etc.)
         String users = "";

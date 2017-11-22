@@ -10,7 +10,7 @@ public class Driver {
 
         // API user will use
         Volume vol = new Volume("ext2fs");
-        Ext2File file = new Ext2File(vol, "/deep/down/in/the/filesystem/there/lived/a/file");
+        Ext2File file = new Ext2File(vol, "/deep/down/in/the/filesystem/there/lived/");
 
         // // Prints directory contents of the file passed in
         // Directory d = new Directory(file);
