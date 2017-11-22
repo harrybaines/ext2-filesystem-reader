@@ -70,12 +70,10 @@ public class Directory extends DataBlock {
         List<String> directoryStrings = getFileInfo();
         
         System.out.println("\n----------");
-        System.out.println("Directory Listing for Directory (using iNode "+nextINode.getINodeNumber()+"):");
-        System.out.println("----------");
+        System.out.println("Directory Listing for " + file.getFileString() + ":\n");
         for (String row : directoryStrings)
             System.out.println(row);
-        System.out.println("----------\n");
-
+        System.out.println("\n----------\n");
     }
 
 
@@ -84,7 +82,7 @@ public class Directory extends DataBlock {
         // Obtain iNode information at current row
         INode currentINode = getINodeFromRow(offset);
 
-        System.out.println("Currently looking at " + currentINode.getINodeNumber() + " in the directory listing.");
+        //System.out.println("Currently looking at " + currentINode.getINodeNumber() + " in the directory listing.");
         currentINode.getINodeInfoBytes();
 
         // System.out.println("Current iNode: " + currentINode.getINodeNumber());

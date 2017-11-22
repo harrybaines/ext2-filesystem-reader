@@ -44,8 +44,8 @@ public class Ext2File extends DataBlock {
         System.out.println("File String: " + fileString);
         if (openFile())
             System.out.println("File opened successfully!\n\n");
-        else
-            System.out.println("Sorry, couldn't find that file.\n\n");
+        // else
+        //     System.out.println("Sorry, couldn't find that file.\n\n");
     }
 
     public ByteBuffer getDirDataBuffer() {
@@ -201,16 +201,17 @@ public class Ext2File extends DataBlock {
 
             // Check to see if current directory using the file path string actually exists!
             INode nextINode = d.getNextINode();
-            if (nextINode != null) {
+
+            if (nextINode != null && nextINode.getFileModeAsString().charAt(0) != '-') {
                 rootDataBlocks = getDirBytes(d.getNextINode().getINodeNumber());
                 System.out.println("Directory referenced by iNode " + d.getNextINode().getINodeNumber() + ":");
                 Helper.dumpHexBytes(rootDataBlocks);
                 dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
                 dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
             }
-            else {
-                return false;
-            }
+            // else {
+            //     return false;
+            // }
         }
 
 

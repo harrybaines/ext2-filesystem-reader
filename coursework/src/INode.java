@@ -84,7 +84,7 @@ public class INode extends DataBlock {
      * Outputs all fields relevant to a given iNode.
      */
     public void printINodeInfo() {
-        System.out.println("----------");
+        System.out.println("\n----------");
         System.out.println("iNode " + iNodeNumber + " information: ");
         System.out.println("----------");
         System.out.println("File mode:                              0x" + String.format("%02X ", getFileMode()));
