@@ -20,7 +20,7 @@ public class Directory extends DataBlock {
 
     private boolean fileFoundInDirectory;
 
-    private INode iNodeForDirToSearch;
+    private INode nextINode;
 
     public Directory(Ext2File file) {
         super(file.getVolume());
@@ -35,8 +35,8 @@ public class Directory extends DataBlock {
         return this.fileFoundInDirectory;
     }
 
-    public INode getINodeOfNextDirectory() {
-        return this.iNodeForDirToSearch;
+    public INode getNextINode() {
+        return this.nextINode;
     }
 
     /**
@@ -70,7 +70,7 @@ public class Directory extends DataBlock {
         List<String> directoryStrings = getFileInfo();
         
         System.out.println("\n----------");
-        System.out.println("Directory Listing for Root Directory (using iNode 2):");
+        System.out.println("Directory Listing for Directory (using iNode "+nextINode.getINodeNumber()+"):");
         System.out.println("----------");
         for (String row : directoryStrings)
             System.out.println(row);
@@ -83,13 +83,15 @@ public class Directory extends DataBlock {
 
         // Obtain iNode information at current row
         INode currentINode = getINodeFromRow(offset);
+
+        System.out.println("Inode " + currentINode.getINodeNumber() + " info bytes:");
         currentINode.getINodeInfoBytes();
 
-        System.out.println("Current iNode: " + currentINode.getINodeNumber());
+        // System.out.println("Current iNode: " + currentINode.getINodeNumber());
 
-        System.out.println("length: " + this.getShortFromBytes(offset + 4, dirDataBuffer));
-        System.out.println("name len: " + this.getByte(offset + 6, dirDataBuffer));
-        System.out.println("file type: " + this.getByte(offset + 7, dirDataBuffer));
+        // System.out.println("length: " + this.getShortFromBytes(offset + 4, dirDataBuffer));
+        // System.out.println("name len: " + this.getByte(offset + 6, dirDataBuffer));
+        // System.out.println("file type: " + this.getByte(offset + 7, dirDataBuffer));
         
 
         // Obtain file name given the filename length
@@ -98,22 +100,13 @@ public class Directory extends DataBlock {
             filenameBytes[i] = this.getByte((offset + (8+i)), dirDataBuffer);
         }
         String filenameString = new String(filenameBytes);
-        System.out.println("filename: " + filenameString);
-        System.out.println("----------");
+        // System.out.println("filename: " + filenameString);
+        // System.out.println("----------");
 
-
-
-
-
-        // Check if fileName is equal to the current file you should be looking for
-        if (filenameString.equals(file.getCurrentDirString())) {
-            System.out.println("FOUND deep!");
-            System.out.println("Next iNode to use: " + currentINode.getINodeNumber());
-            fileFoundInDirectory = true;
+        // System.out.println("file.getNextDirectoryString() = " + file.getNextDirectoryString());
+        if (filenameString.equals(file.getNextDirectoryString())) {
+            this.nextINode = currentINode;
         }
-
-
-
 
         // Obtain user ID (root etc.)
         String users = "";
