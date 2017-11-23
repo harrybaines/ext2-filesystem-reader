@@ -74,7 +74,7 @@ public class Ext2File extends DataBlock {
 
     public byte[] getDirBytes(int iNodeNumber) {
 
-        // Obtains all bytes relevant to iNode2 (root directory)
+        // Obtains all bytes relevant to a given
         int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
         INode iNode = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
         iNode.printINodeInfo();
@@ -109,6 +109,9 @@ public class Ext2File extends DataBlock {
 
     public byte[] readFile(long startByte, long length) {
 
+        if (length < 0 || startByte < 0)
+            return new byte[0];
+
         byte[] byteArray = new byte[(int)length];
 
         if (iNodeForFileToOpen != null) {
@@ -133,9 +136,9 @@ public class Ext2File extends DataBlock {
                 dataBytes.add(b);
 
             int index = 0;
-            for (int i = 0; i < byteArray.length; i++) {
+            for (int i = (int) startByte; i < byteArray.length; i++) {
                 if (i >= dataBlocksFromPointers.length) {
-                    System.out.println("----------\nThe length you provided is too large - all data found has been printed.\n----------\n");
+                    System.out.println("----------\nThe length you provided is too large - all data found has been printed.\n");
                     break;
                 }
                 byteArray[i] = dataBlocksFromPointers[i];
@@ -143,7 +146,8 @@ public class Ext2File extends DataBlock {
 
         }
         else {
-            System.out.println("File not found/selected - unable to open a file!");
+            System.out.println("File not found/selected - unable to open file specified!");
+            byteArray = new byte[0];
         }
 
         return byteArray;
@@ -203,6 +207,7 @@ public class Ext2File extends DataBlock {
             // Check to see if current directory using the file path string actually exists!
             INode nextINode = d.getNextINode();
 
+            // INode exists and points to a directory
             if (nextINode != null && nextINode.getFileModeAsString().charAt(0) != '-') {
                 rootDataBlocks = getDirBytes(d.getNextINode().getINodeNumber());
                 System.out.println("Directory referenced by iNode " + d.getNextINode().getINodeNumber() + ":");
@@ -210,9 +215,9 @@ public class Ext2File extends DataBlock {
                 dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
                 dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
             }
-            else if (nextINode.getFileModeAsString().charAt(0) == '-') {
+            // INode exists and points to a file
+            else if (nextINode != null) {
                 iNodeForFileToOpen = nextINode;
-                System.out.println("INODE FOR FILE TO OPEN: " + iNodeForFileToOpen.getINodeNumber());
                 return false;
             }
         }

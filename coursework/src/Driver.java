@@ -14,9 +14,11 @@ public class Driver {
         Directory d = new Directory(file);
         d.printDirectoryInfo();
 
-        // NEED TO CHANGE
+        // NEED TO CHANGE - FILE SIZE
         byte buf[] = file.readFile(0L, 2048);
-        System.out.format ("File Contents:\n----------\n%s\n\n", new String(buf)); 
+
+        // WORK ON THIS
+        System.out.format("%s\n\n", ((buf.length == 0) ? "--- nothing found ---" : "File Contents:\n----------\n" + new String(buf))); 
     }
 
     /**
