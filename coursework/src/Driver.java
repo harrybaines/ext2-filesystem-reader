@@ -2,7 +2,7 @@ package coursework;
 
 public class Driver {
 
-    private static final String pathName = "/files";
+    private static final String pathName = "/two-cities";
 
     // API user will use
     public Driver() {
@@ -16,7 +16,7 @@ public class Driver {
 
         // NEED TO CHANGE
         byte buf[] = file.readFile(0L, 2048);
-        System.out.format ("%s\n", new String(buf)); 
+        System.out.format ("File Contents:\n----------\n%s\n\n", new String(buf)); 
     }
 
     /**

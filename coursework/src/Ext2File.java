@@ -21,6 +21,10 @@ public class Ext2File extends DataBlock {
 
     private int charCount;
 
+    private INode iNodeForFileToOpen;
+
+    private String fileName;
+
     /**
      * Constructor used to represent a file in the given volume.
      * The file can then be read and output to the user and can also view important info.
@@ -44,8 +48,8 @@ public class Ext2File extends DataBlock {
         System.out.println("File String: " + fileString);
         if (openFile())
             System.out.println("File opened successfully!\n\n");
-        // else
-        //     System.out.println("Sorry, couldn't find that file.\n\n");
+        else
+            System.out.println("Finished searching - a file has potentially been found.\n\n");
     }
 
     public ByteBuffer getDirDataBuffer() {
@@ -72,10 +76,10 @@ public class Ext2File extends DataBlock {
 
         // Obtains all bytes relevant to iNode2 (root directory)
         int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
-        INode iNode2 = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
-        iNode2.printINodeInfo();
+        INode iNode = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
+        iNode.printINodeInfo();
 
-        byte[] rootDataBlocks = iNode2.getDataBlocksFromDirectPointers();
+        byte[] rootDataBlocks = iNode.getDataBlocksFromDirectPointers();
         return rootDataBlocks;
     }
 
@@ -105,45 +109,42 @@ public class Ext2File extends DataBlock {
 
     public byte[] readFile(long startByte, long length) {
 
-        // EXAMPLE - finding data block referenced by iNode 12 for two-cities
-        int iNodeNumber = 12;
-        int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
-        INode iNode12 = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
-        byte[] iNode12InfoBytes = iNode12.getINodeInfoBytes();
-        iNode12.printINodeInfo();
+        byte[] byteArray = new byte[(int)length];
 
-        ByteBuffer iNode12byteBlockBuffer = ByteBuffer.wrap(iNode12InfoBytes);
-        iNode12byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        if (iNodeForFileToOpen != null) {
 
+            // Find and read all datablocks for the file, if found successfully
+            int iNodeNumber = iNodeForFileToOpen.getINodeNumber();
+            int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
+            INode iNode = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
+            byte[] iNodeInfoBytes = iNode.getINodeInfoBytes();
+            iNode.printINodeInfo();
 
+            ByteBuffer iNodebyteBlockBuffer = ByteBuffer.wrap(iNodeInfoBytes);
+            iNodebyteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
-        // WORK ON THIS
-        // Obtain iNode 12 first direct pointer
-        List<Byte> dataBytes = new ArrayList<Byte>();
+            // Obtain iNode for all direct pointers if they exist
+            List<Byte> dataBytes = new ArrayList<Byte>();
 
-        int iNode12DataBlockPointer1 = this.getIntFromBytes(40, iNode12byteBlockBuffer);
-        byte[] block1 = this.read(iNode12DataBlockPointer1 * superBlock.getBlockSize(), superBlock.getBlockSize());
+            byte[] dataBlocksFromPointers = iNodeForFileToOpen.getDataBlocksFromDirectPointers();
 
-        for (byte b : block1)
-            dataBytes.add(b);
+            // Transfer all found bytes from data blocks array into buffer
+            for (byte b : dataBlocksFromPointers)
+                dataBytes.add(b);
 
-        // Obtain iNode 12 second direct pointer
-        int iNode12DataBlockPointer2 = this.getIntFromBytes(44, iNode12byteBlockBuffer);
-        byte[] block2 = this.read(iNode12DataBlockPointer2 * superBlock.getBlockSize(), superBlock.getBlockSize());
+            int index = 0;
+            for (int i = 0; i < byteArray.length; i++) {
+                if (i >= dataBlocksFromPointers.length) {
+                    System.out.println("----------\nThe length you provided is too large - all data found has been printed.\n----------\n");
+                    break;
+                }
+                byteArray[i] = dataBlocksFromPointers[i];
+            }
 
-        for (byte b : block2)
-            dataBytes.add(b);
-
-        // Print all file contents for iNode 12
-        // System.out.println("File contents pointed to by iNode 12:");
-        // System.out.println("----------");
-        // System.out.println(this.printFileContents(block1) + this.printFileContents(block2) + "\n");
-        byte[] byteArray = new byte[dataBytes.size()];
-        int index = 0;
-        for (byte b : dataBytes)
-            byteArray[index++] = b;
-
-
+        }
+        else {
+            System.out.println("File not found/selected - unable to open a file!");
+        }
 
         return byteArray;
     }
@@ -209,11 +210,13 @@ public class Ext2File extends DataBlock {
                 dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
                 dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
             }
-            // else {
-            //     return false;
-            // }
+            else if (nextINode.getFileModeAsString().charAt(0) == '-') {
+                iNodeForFileToOpen = nextINode;
+                System.out.println("INODE FOR FILE TO OPEN: " + iNodeForFileToOpen.getINodeNumber());
+                return false;
+            }
         }
-        
+
         return true;
     }
 
