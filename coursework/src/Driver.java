@@ -2,13 +2,23 @@ package coursework;
 
 public class Driver {
 
-    private static final String pathName = "/files/dir-e";
+    private static final String pathName = "/deep/down/in/the/filesystem/there/lived/a/file";
 
     // API user will use
     public Driver() {
 
         Volume vol = new Volume("ext2fs");
         Ext2File file = new Ext2File(vol, pathName);
+
+
+        // byte[] bytes = new byte[1600];
+        // byte[] allBytes = vol.getFileInBytes();
+        // for (int i = 0; i < bytes.length; i++) {
+        //     bytes[i] = allBytes[i+9962496];
+        // }
+        // System.out.println("LOLOL");
+        // Helper.dumpHexBytes(bytes);
+
 
         Directory d = new Directory(file);
         d.printDirectoryInfo();

@@ -51,6 +51,11 @@ public class INode extends DataBlock {
     public byte[] getINodeInfoBytes() {
         return this.iNodeBytes;
     }
+    /**
+     *
+     ** GET INDIRECT POINTERS ARRAY
+     *
+     */
 
     /**
      * Retrieves an array of bytes referenced by the direct pointers in this iNode.

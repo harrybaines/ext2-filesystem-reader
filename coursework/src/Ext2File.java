@@ -1,29 +1,33 @@
 package coursework;
 
-import java.io.*;
-
 import java.util.List;
 import java.util.ArrayList;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+/**
+ * Title: Ext2File
+ *
+ * This class represents a file within a given volume.
+ * For the ext2 filesystem, this class represents a file within the filesystem.
+ * This class is an extension of the DataBlock which provides further functionality for reading blocks and obtaining bytes.
+ *
+ * @author Harry Baines
+ * @see DataBlock
+ */
 public class Ext2File extends DataBlock {
 
     private String fileString;          // Filename of the file the user wishes to open from the volume
     private SuperBlock superBlock;      // Reference to the superblock
 
-    private int[] iNodeTablePointers;
+    private int[] iNodeTablePointers;   // Array containing all the iNode table pointers from group descriptors
+    private ByteBuffer dirDataBuffer;   // Buffer to store all bytes relevant to the current directory
 
-    private ByteBuffer dirDataBuffer;
+    private String curDirString;        // Stores the name of the current directory
+    private int charCount;              // Used to split the current directory string into parts
 
-    private String curDirString;
-
-    private int charCount;
-
-    private INode iNodeForFileToOpen;
-
-    private String fileName;
+    private INode iNodeForFileToOpen;   // Stores the iNode for the file which is to be opened
 
     /**
      * Constructor used to represent a file in the given volume.
@@ -40,38 +44,23 @@ public class Ext2File extends DataBlock {
         superBlock = new SuperBlock(vol);
         superBlock.printSuperblockInfo();
 
-        // Array containing all iNode table pointers
+        // Populate array with all iNode table pointers from group descriptors
         iNodeTablePointers = getAllINodeTblPointers();
 
         charCount = 0;
 
         System.out.println("File String: " + fileString);
+
+        // Check if file was opened successfully
         if (openFile())
             System.out.println("File opened successfully!\n\n");
-        // else
-        //     System.out.println("Finished searching - a file has potentially been found.\n\n");
     }
 
-    public ByteBuffer getDirDataBuffer() {
-        return this.dirDataBuffer;
-    }
-
-    public int[] getiNodeTablePointers() {
-        return this.iNodeTablePointers;
-    }
-
-    public SuperBlock getSuperblock() {
-        return this.superBlock;
-    }
-
-    public String getFileString() {
-        return this.fileString;
-    }
-
-    public String getNextDirectoryString() {
-        return this.curDirString;
-    }
-
+    /** 
+     * Method to obtain an array containing the bytes in the current directory under consideration.
+     * @param iNodeNumber The iNode number which references the directory.
+     * @return The array of bytes in the current directory.
+     */
     public byte[] getDirBytes(int iNodeNumber) {
 
         // Obtains all bytes relevant to a given
@@ -79,23 +68,25 @@ public class Ext2File extends DataBlock {
         INode iNode = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
         iNode.printINodeInfo();
 
-        byte[] rootDataBlocks = iNode.getDataBlocksFromDirectPointers();
-        return rootDataBlocks;
+        byte[] dirDataBlocks = iNode.getDataBlocksFromDirectPointers();
+        return dirDataBlocks;
     }
 
     /**
      * Simple method to print the contents of a file in ASCII format.
      * A string is returned containing the full file contents.
+     *
+     * @param bytes The array of bytes containing file info to be 
      * @return The string of characters in the file.
      */
     public String printFileContents(byte[] bytes) {
 
         String asciiString = "";
 
+        // Obtain ASCII equivalent of given byte in array
         for (byte b : bytes) {
 
-            // Obtain ASCII equivalent of given byte in array
-            int asciiInt = b & 0xFF;
+            int asciiInt = b;
             
             if (asciiInt >= 1 && asciiInt < 256)
                 asciiString += (char)asciiInt;
@@ -107,6 +98,15 @@ public class Ext2File extends DataBlock {
     //     return this.size;
     // }
 
+    /**
+     * Method to read the file the user specified in the file string.
+     * The method will read bytes from startByte up to the length they provide.
+     * An array of bytes will be returned containing all bytes in the file.
+     *
+     * @param startByte The byte to start reading from in the file.
+     * @param length The length of the file the user wishes to read in bytes.
+     * @return An array of bytes relevant to the file opened.
+     */
     public byte[] readFile(long startByte, long length) {
 
         if (length < 0 || startByte < 0)
@@ -153,40 +153,48 @@ public class Ext2File extends DataBlock {
         return byteArray;
     }
 
+    /**
+     * Method to obtain the current directory name under consideration as a string.
+     * @return The current directory name as a string.
+     */
     public String getCurDirectoryString() {
 
-        // Obtain individual dircetory names from fileString
+        // Obtain individual directory names from fileString
         curDirString = "";
         String fileString = getFileString();
         int beginCount = 0;
         int slashCount = 0;
 
+        // Iterate over the fileString to obtain individual directory names
         while (true) {
 
             if (charCount >= fileString.length()) 
                 break;
 
+            // Break if a forward slash is met
             if (fileString.charAt(charCount) == '/') {
                 slashCount++;
                 beginCount++;
-                if (slashCount == 2) {
+                if (slashCount == 2)
                     break;
-                }
             }
 
+            // Append character to current directory name string
             if (fileString.charAt(charCount) != '/')
                 curDirString += fileString.charAt(charCount);
 
             charCount++;
-
             beginCount++;
-
         }
-
         return curDirString;
     }
 
-
+    /** 
+     * Method which attempts to open a file specified by the user in the fileString.
+     * If successful, the user will be notified the file was successfully opened.
+     *
+     * @return True if the file was successfully opened, false otherwise.
+     */
     public boolean openFile() {
 
         // Get directory bytes pointed to by iNode 2 direct pointer
@@ -221,7 +229,6 @@ public class Ext2File extends DataBlock {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -246,17 +253,59 @@ public class Ext2File extends DataBlock {
 
         int currentDesc = 0;
 
+        // Create new GroupDescriptor instances to obtain iNode table pointers
         while (currentDesc < numBlockGroups) {
             groupDescs[currentDesc] = new GroupDescriptor(groupDescBuffer, currentDesc, superBlock);
             iNodeTablePointers[currentDesc] = groupDescs[currentDesc].getINodeTblPointer();
             currentDesc++;
         }
 
+        // Print found table pointers
         System.out.println("----------");
         for (int i = 0; i < iNodeTablePointers.length; i++)
             System.out.println("iNode table pointer " + i + ": " + iNodeTablePointers[i]);
         System.out.println("----------");
 
         return iNodeTablePointers;
+    }
+
+    /**
+     * Obtains the byte buffer for the current directory.
+     * @return Byte buffer reference.
+     */
+    public ByteBuffer getDirDataBuffer() {
+        return this.dirDataBuffer;
+    }
+
+    /**
+     * Obtains the list of all iNode table pointers found in the group descriptors.
+     * @return List of iNode table pointers.
+     */
+    public int[] getiNodeTablePointers() {
+        return this.iNodeTablePointers;
+    }
+
+    /**
+     * Obtains the reference to the superblock.
+     * @return The superblock instance.
+     */
+    public SuperBlock getSuperblock() {
+        return this.superBlock;
+    }
+
+    /**
+     * Obtains the filename string the user passed in and wishes to open.
+     * @return Filename string.
+     */
+    public String getFileString() {
+        return this.fileString;
+    }
+
+    /**
+     * Obtains the name of the next directory to search in as a string.
+     * @return The directory name as a string.s
+     */
+    public String getNextDirectoryString() {
+        return this.curDirString;
     }
 }

@@ -84,7 +84,7 @@ public class Directory extends DataBlock {
 
         //System.out.println("Currently looking at " + currentINode.getINodeNumber() + " in the directory listing.");
         byte[] INodeBytes = currentINode.getINodeInfoBytes();
-        System.out.println("Current iNode: " + currentINode.getINodeNumber());
+        System.out.print("Current iNode: " + currentINode.getINodeNumber());
         Helper.dumpHexBytes(INodeBytes);
 
         // System.out.println("length: " + this.getShortFromBytes(offset + 4, dirDataBuffer));
@@ -98,7 +98,7 @@ public class Directory extends DataBlock {
             filenameBytes[i] = this.getByte((offset + (8+i)), dirDataBuffer);
         }
         String filenameString = new String(filenameBytes);
-        System.out.println("filename: " + filenameString);
+        System.out.println("filename: " + filenameString + "\n");
         // System.out.println("----------");
 
         // Find the file you're supposed to search for in the current directory listing

@@ -53,6 +53,6 @@ public abstract class Helper {
             System.out.print(asciiString);
         }
 
-        System.out.println("----------\n");
+        System.out.println("----------");
     }
 }

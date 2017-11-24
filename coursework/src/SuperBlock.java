@@ -29,7 +29,7 @@ public class SuperBlock extends DataBlock {
         byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
         
         // Obtain hex and ASCII values of bytes in superblock
-        Helper.dumpHexBytes(block);
+        //Helper.dumpHexBytes(block);
     }
 
     /**
