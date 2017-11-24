@@ -42,16 +42,11 @@ public abstract class Helper {
 
                 // Obtain ASCII equivalent of given byte in array
                 int asciiInt = bytes[(count-16) + i] & 0xFF;
+
+                asciiString += (asciiInt > 32 && asciiInt < 127) ? (char) asciiInt : "_";
                 
-                if (asciiInt > 32 && asciiInt < 127)
-                    asciiString += (char)asciiInt;
-                else
-                    asciiString += "_";
-                
-                if (i == 7 || i == 15) {
-                    asciiString += " | ";
-                }
-            
+                if (i == 7 || i == 15)
+                    asciiString += " | ";    
             }
             
             asciiString += "\n";

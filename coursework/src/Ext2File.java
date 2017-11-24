@@ -48,8 +48,8 @@ public class Ext2File extends DataBlock {
         System.out.println("File String: " + fileString);
         if (openFile())
             System.out.println("File opened successfully!\n\n");
-        else
-            System.out.println("Finished searching - a file has potentially been found.\n\n");
+        // else
+        //     System.out.println("Finished searching - a file has potentially been found.\n\n");
     }
 
     public ByteBuffer getDirDataBuffer() {

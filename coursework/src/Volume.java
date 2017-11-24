@@ -23,19 +23,15 @@ public class Volume {
     public int openVolume(String filePath) {
         try {
             file = new RandomAccessFile(filePath, "r");
-            try {
-                fileInBytes = new byte[(int) file.length()];
-                file.readFully(fileInBytes);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+            fileInBytes = new byte[(int) file.length()];
+            file.readFully(fileInBytes);
             return 1;
-
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundException f) {
+            f.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
-            return 0;
         }
+        return 0;
     }   
 
     public byte[] getFileInBytes() {
