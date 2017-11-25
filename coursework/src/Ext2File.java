@@ -68,7 +68,8 @@ public class Ext2File extends DataBlock {
         INode iNode = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
         iNode.printINodeInfo();
 
-        byte[] dirDataBlocks = iNode.getDataBlocksFromDirectPointers();
+        byte[] dirDataBlocks = iNode.getDataBlocksFromPointers();
+
         return dirDataBlocks;
     }
 
@@ -129,7 +130,15 @@ public class Ext2File extends DataBlock {
             // Obtain iNode for all direct pointers if they exist
             List<Byte> dataBytes = new ArrayList<Byte>();
 
-            byte[] dataBlocksFromPointers = iNodeForFileToOpen.getDataBlocksFromDirectPointers();
+
+
+
+            byte[] dataBlocksFromPointers = iNodeForFileToOpen.getDataBlocksFromPointers();
+
+
+
+
+
 
             // Transfer all found bytes from data blocks array into buffer
             for (byte b : dataBlocksFromPointers)

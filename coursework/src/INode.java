@@ -24,6 +24,8 @@ public class INode extends DataBlock {
 
     private int fileMode;
 
+    private int indirectBlockSize;
+
     public INode(int iNodeNumber, int iNodeTblPointer, int groupNum, SuperBlock superBlock) {
         super(superBlock.getVolume());
         this.iNodeNumber = iNodeNumber;
@@ -38,6 +40,8 @@ public class INode extends DataBlock {
         // Wrap in buffer for later reading
         iNodeBuffer = ByteBuffer.wrap(iNodeBytes);
         iNodeBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        indirectBlockSize = superBlock.getBlockSize() / 4;
     }
 
     public int getINodeNumber() {
@@ -51,38 +55,149 @@ public class INode extends DataBlock {
     public byte[] getINodeInfoBytes() {
         return this.iNodeBytes;
     }
-    /**
-     *
-     ** GET INDIRECT POINTERS ARRAY
-     *
-     */
 
     /**
      * Retrieves an array of bytes referenced by the direct pointers in this iNode.
      * @return Array of bytes for the data blocks being pointed to.
      */
-    public byte[] getDataBlocksFromDirectPointers() {
+    public byte[] getDataBlocksFromPointers() {
+
+        List<Byte> allDataBlocks = new ArrayList<Byte>();
 
         int[] directPointers = this.getDirectPointers();
 
+        System.out.println("Direct Pointers for iNode " + iNodeNumber + ":");
+        for (int i : directPointers)
+            System.out.println(i);
+
+        // Transfer all found data from direct pointers into 'master' list
+        for (byte b : this.getDataBlocks(directPointers))
+            allDataBlocks.add(b);
+
+        // Find indirect pointers and search through blocks to find data blocks
+        int indirectPointer = this.getIndirectPointer();                // Initial indirect pointer in iNode
+        int doubleIndirectPointer = this.getDoubleIndirectPointer();    // Initial double-indirect pointer in iNode
+        int tripleIndirectPointer = this.getTripleIndirectPointer();    // Initial triple-indirect pointer in iNode
+
+        // Level 1 of indirection - SINGLE INDIRECT
+        if (indirectPointer != 0) {
+
+            int[] indirectTableBlockPointers = this.getIndirectTableBlockPointers(indirectPointer);
+
+            // System.out.println("Indirect Pointer for iNode " + iNodeNumber + ":");
+            // System.out.println(indirectPointer);
+
+            // System.out.println("Direct pointers found INSIDE the block pointed to by the single-indirect pointer: ");
+            // for (int i : indirectTableBlockPointers)
+            //     System.out.println("pointer: " + i);
+
+            // Transfer all found data from indirect pointers into 'master' list
+            for (byte b : this.getDataBlocks(indirectTableBlockPointers))
+                allDataBlocks.add(b);
+
+        }
+
+
+        // Level 2 of indirection - DOUBLE INDIRECT
+        if (doubleIndirectPointer != 0) {
+
+            int[] indirectTableBlockPointers = this.getIndirectTableBlockPointers(doubleIndirectPointer);
+
+            // System.out.println("Double-indirect Pointer for iNode " + iNodeNumber + ":");
+            // System.out.println(doubleIndirectPointer);
+
+            // System.out.println("Indirect pointers found INSIDE the block pointed to by the first indirect pointer: ");
+            // for (int i : indirectTableBlockPointers)
+            //     System.out.println("pointer: " + i);
+
+            int nextBlockPointer = 0;
+            int[] indirectTableBlockPointersLvl2 = new int[indirectBlockSize];
+
+            for (int i : indirectTableBlockPointers) {
+                if (i != 0) {
+                    nextBlockPointer = i;
+                    int[] currentIndirectTableBlockPointers = this.getIndirectTableBlockPointers(nextBlockPointer);
+                    
+                    //System.out.println("Pointers found in level 2 of indirection in the double-indrect stage: ");
+                    for (int j = 0; j < currentIndirectTableBlockPointers.length; j++) {
+                        if (currentIndirectTableBlockPointers[j] != 0)
+                            indirectTableBlockPointersLvl2[j] = currentIndirectTableBlockPointers[j];
+                        System.out.println(currentIndirectTableBlockPointers[j]);
+                    }
+                }
+            }
+
+            // Transfer all found data from indirect pointers into 'master' list
+            for (byte b : this.getDataBlocks(indirectTableBlockPointersLvl2))
+                allDataBlocks.add(b);
+        }
+
+
+        // Level 3 of indirection - TRIPLE INDIRECT
+        if (tripleIndirectPointer != 0) {
+           
+            int[] indirectTableBlockPointers = this.getIndirectTableBlockPointers(tripleIndirectPointer);
+
+            // System.out.println("Triple indirect Pointer for iNode " + iNodeNumber + ":");
+            // System.out.println(tripleIndirectPointer);
+
+            // System.out.println("Indirect pointers found INSIDE the block pointed to by the first indirect pointer: ");
+            // for (int i : indirectTableBlockPointers)
+            //     System.out.println("pointer: " + i);
+
+            int nextBlockPointer = 0;
+            int[] indirectTableBlockPointersLvl3 = new int[indirectBlockSize];
+
+            for (int i : indirectTableBlockPointers) {
+                if (i != 0) {
+                    nextBlockPointer = i;
+                    int[] currentIndirectTableBlockPointers = this.getIndirectTableBlockPointers(nextBlockPointer);
+                    
+                    for (int j = 0; j < currentIndirectTableBlockPointers.length; j++) {
+                        if (currentIndirectTableBlockPointers[j] != 0) {
+
+                            indirectTableBlockPointersLvl3[j] = currentIndirectTableBlockPointers[j];
+
+                            nextBlockPointer = currentIndirectTableBlockPointers[j];
+                            int[] finalIndirectTableBlockPointers = this.getIndirectTableBlockPointers(nextBlockPointer);
+                    
+                            for (int k = 0; k < finalIndirectTableBlockPointers.length; k++) {
+                                if (finalIndirectTableBlockPointers[k] != 0) {
+                                    indirectTableBlockPointersLvl3[k] = finalIndirectTableBlockPointers[k];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Transfer all found data from indirect pointers into 'master' list
+            for (byte b : this.getDataBlocks(indirectTableBlockPointersLvl3))
+                allDataBlocks.add(b);
+        }
+
+        // Transfer dynamic array list into array to return
+        byte[] byteArray = new byte[allDataBlocks.size()];
+        for (int i = 0; i < allDataBlocks.size(); i++)
+            byteArray[i] = allDataBlocks.get(i);
+
+        return byteArray;
+    }
+
+    public List<Byte> getDataBlocks(int[] pointers) {
+
+        // Create array of data blocks found from indirect pointers
         List<Byte> byteList = new ArrayList<Byte>();
 
-        for (int i = 0; i < directPointers.length; i++) {
-            if (directPointers[i] != 0) {
-                byte[] dataBlocksArray = this.read(directPointers[i] * superBlock.getBlockSize(), superBlock.getBlockSize());
+        for (int i = 0; i < pointers.length; i++) {
+            if (pointers[i] != 0) {
+                byte[] dataBlocksArray = this.read(pointers[i] * superBlock.getBlockSize(), superBlock.getBlockSize());
                 for (int curBlock = 0; curBlock < dataBlocksArray.length; curBlock++) {
                     byteList.add(dataBlocksArray[curBlock]);
                 }
             }
-            else 
-                break;
         }
-
-        byte[] byteArray = new byte[byteList.size()];
-        for (int i = 0; i < byteList.size(); i++)
-            byteArray[i] = byteList.get(i);
-
-        return byteArray;
+        return byteList;
     }
 
     /**
@@ -224,12 +339,26 @@ public class INode extends DataBlock {
         return (directPointers);
     }
 
+    public int[] getIndirectTableBlockPointers(int blockNum) {
+
+        byte[] indirectTableBytes = this.read(blockNum*superBlock.getBlockSize(), superBlock.getBlockSize());
+        ByteBuffer indirectBuffer = ByteBuffer.wrap(indirectTableBytes);
+        indirectBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        int[] indirectPointers = new int[indirectBlockSize];
+
+        for (int i = 0; i < indirectPointers.length; i++)
+            indirectPointers[i] = this.getIntFromBytes(4*i, indirectBuffer);
+
+        return indirectPointers;
+    }
+
     /**
-     * Retrieves the indirect integer data block pointer.
-     * @return The indirect data block pointer.
+     * Retrieves the 4-byte integer indirect data block pointer from the iNode.
+     * @return The single-indirect data block pointer.
      */
     public int getIndirectPointer() {
-        return (this.getIntFromBytes(4, iNodeBuffer));
+        return (this.getIntFromBytes(88, iNodeBuffer));
     }
 
     /**
@@ -237,7 +366,7 @@ public class INode extends DataBlock {
      * @return The double-indirect data block pointer.
      */
     public int getDoubleIndirectPointer() {
-        return (this.getIntFromBytes(4, iNodeBuffer));
+        return (this.getIntFromBytes(92, iNodeBuffer));
     }
 
     /**
@@ -245,7 +374,7 @@ public class INode extends DataBlock {
      * @return The triple-indirect data block pointer.
      */
     public int getTripleIndirectPointer() {
-        return (this.getIntFromBytes(4, iNodeBuffer));
+        return (this.getIntFromBytes(96, iNodeBuffer));
     }
 
     /**

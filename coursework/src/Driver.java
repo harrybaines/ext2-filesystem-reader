@@ -11,10 +11,10 @@ public class Driver {
         Ext2File file = new Ext2File(vol, pathName);
 
 
-        // byte[] bytes = new byte[1600];
+        // byte[] bytes = new byte[256*4];
         // byte[] allBytes = vol.getFileInBytes();
         // for (int i = 0; i < bytes.length; i++) {
-        //     bytes[i] = allBytes[i+9962496];
+        //     bytes[i] = allBytes[i+15873];
         // }
         // System.out.println("LOLOL");
         // Helper.dumpHexBytes(bytes);
@@ -24,7 +24,7 @@ public class Driver {
         d.printDirectoryInfo();
 
         // NEED TO CHANGE - FILE SIZE
-        byte buf[] = file.readFile(0L, 10251);
+        byte buf[] = file.readFile(0L, 100000);
 
         // WORK ON THIS
         System.out.format("%s\n\n", ((buf.length == 0) ? "--- nothing found ---" : "File Contents:\n----------\n" + new String(buf))); 
