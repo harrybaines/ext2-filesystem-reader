@@ -14,6 +14,7 @@ public abstract class Helper {
     public static void dumpHexBytes(byte[] bytes) {
                 
         int count = 0;
+        int byteCount = 0;
 
         System.out.println("\nByte Count: " + bytes.length);
         System.out.println("----------");
@@ -22,14 +23,19 @@ public abstract class Helper {
 
             StringBuilder sb = new StringBuilder();
             String asciiString = "";
-            
+            byteCount = 0;
+
             for (int i = 0; i < 16; i++) {
 
-                // add XX entries for too few bytes
-            
-                // Obtain hex equivalent of given byte in array     
-                sb.append(String.format("%02X ", bytes[count]));
-                
+                // Add XX entries for too few bytes
+                if (count >= bytes.length)
+                    sb.append("XX ");
+                else {
+                    // Obtain hex equivalent of given byte in array     
+                    sb.append(String.format("%02X ", bytes[count]));
+                    byteCount++;
+                }
+
                 if (i == 7 || i == 15)
                     sb.append("| ");
 
@@ -38,15 +44,22 @@ public abstract class Helper {
             
             System.out.print(sb.toString());
 
+            int asciiCount = 0;
+
             for (int i = 0; i < 16; i++) {
 
-                // Obtain ASCII equivalent of given byte in array
-                int asciiInt = bytes[(count-16) + i] & 0xFF;
+                if (asciiCount >= byteCount)
+                    asciiString += " ";
+                else {
+                    // Obtain ASCII equivalent of given byte in array
+                    int asciiInt = bytes[(count-16) + i] & 0xFF;
+                    asciiString += (asciiInt > 32 && asciiInt < 127) ? (char) asciiInt : "_";                    
+                }
 
-                asciiString += (asciiInt > 32 && asciiInt < 127) ? (char) asciiInt : "_";
-                
                 if (i == 7 || i == 15)
-                    asciiString += " | ";    
+                    asciiString += " | ";  
+
+                asciiCount++;  
             }
             
             asciiString += "\n";

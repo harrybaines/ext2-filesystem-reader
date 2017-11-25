@@ -2,7 +2,7 @@ package coursework;
 
 public class Driver {
 
-    private static final String pathName = "/deep/down/in/the/filesystem/there/lived/a/file";
+    private static final String pathName = "/files/trpl-ind-e";
 
     // API user will use
     public Driver() {
@@ -11,13 +11,13 @@ public class Driver {
         Ext2File file = new Ext2File(vol, pathName);
 
 
-        // byte[] bytes = new byte[256*4];
-        // byte[] allBytes = vol.getFileInBytes();
-        // for (int i = 0; i < bytes.length; i++) {
-        //     bytes[i] = allBytes[i+15873];
-        // }
-        // System.out.println("LOLOL");
-        // Helper.dumpHexBytes(bytes);
+        byte[] bytes = new byte[7];
+        byte[] allBytes = vol.getFileInBytes();
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = allBytes[i+1024];
+        }
+        System.out.println("LOLOL");
+        Helper.dumpHexBytes(bytes);
 
 
         Directory d = new Directory(file);
