@@ -18,7 +18,8 @@ import java.nio.ByteOrder;
  */
 public class Ext2File extends DataBlock {
 
-    private String fileString;          // Filename of the file the user wishes to open from the volume
+    private String filePathString;      // File path of the file the user wishes to open from the volume
+    private String fileName;
     private SuperBlock superBlock;      // Reference to the superblock
 
     private int[] iNodeTablePointers;   // Array containing all the iNode table pointers from group descriptors
@@ -36,9 +37,9 @@ public class Ext2File extends DataBlock {
      * @param vol The volume represented by the file opened.
      * @param fileString The name of the file to open in the volume.
      */
-    public Ext2File(Volume vol, String fileString) {
+    public Ext2File(Volume vol, String filePathString) {
         super(vol);
-        this.fileString = fileString;  
+        this.filePathString = filePathString;  
 
         // Print superblock information
         superBlock = new SuperBlock(vol);
@@ -52,6 +53,10 @@ public class Ext2File extends DataBlock {
         // Check if file was opened successfully
         if (openFile())
             System.out.println("File opened successfully!\n\n");
+    }
+
+    public String getFileName() {
+        return this.fileName;
     }
 
     /** 
@@ -108,6 +113,7 @@ public class Ext2File extends DataBlock {
         if (length < 0 || startByte < 0)
             return new byte[0];
 
+        // MAKE BUFFER?
         byte[] byteArray = new byte[(int)length];
 
         if (iNodeForFileToOpen != null) {
@@ -116,11 +122,6 @@ public class Ext2File extends DataBlock {
             int iNodeNumber = iNodeForFileToOpen.getINodeNumber();
             int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
             INode iNode = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
-            byte[] iNodeInfoBytes = iNode.getINodeInfoBytes();
-            //iNode.printINodeInfo();
-
-            ByteBuffer iNodebyteBlockBuffer = ByteBuffer.wrap(iNodeInfoBytes);
-            iNodebyteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
             // Obtain iNode for all direct pointers if they exist
             List<Byte> dataBytes = new ArrayList<Byte>();
@@ -156,7 +157,7 @@ public class Ext2File extends DataBlock {
      */
     public String getCurDirectoryString() {
 
-        // Obtain individual directory names from fileString
+        // Obtain individual directory names from filePathString
         curDirString = "";
         String fileString = getFileString();
         int beginCount = 0;
@@ -183,6 +184,7 @@ public class Ext2File extends DataBlock {
             charCount++;
             beginCount++;
         }
+        this.fileName = curDirString;
         return curDirString;
     }
 
@@ -282,7 +284,7 @@ public class Ext2File extends DataBlock {
      * @return Filename string.
      */
     public String getFileString() {
-        return this.fileString;
+        return this.filePathString;
     }
 
     /**

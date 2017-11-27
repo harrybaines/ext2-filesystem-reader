@@ -20,6 +20,9 @@ public class Driver {
         Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
 
         // Initialise file as a directory (directories = files) and display directory contents
+
+        //twoCities.printDirectoryInfo();
+
         new Directory(twoCities).printDirectoryInfo();
         new Directory(deepDownFile).printDirectoryInfo();
         new Directory(doubleStart).printDirectoryInfo();
@@ -32,10 +35,10 @@ public class Driver {
         byte tripleStartBuf[] = tripleStart.readFile(0L, 21);
 
         // WORK ON THIS
-        System.out.format("%s\n\n", ((twoCitiesBuf.length == 0) ? "--- nothing found ---" : "\nFile Contents:\n----------\n" + new String(twoCitiesBuf))); 
-        System.out.format("%s\n\n", ((deepDownBuf.length == 0) ? "--- nothing found ---" : "\nFile Contents:\n----------\n" + new String(deepDownBuf))); 
-        System.out.format("%s\n\n", ((doubleStartBuf.length == 0) ? "--- nothing found ---" : "\nFile Contents:\n----------\n" + new String(doubleStartBuf))); 
-        System.out.format("%s\n\n", ((tripleStartBuf.length == 0) ? "--- nothing found ---" : "\nFile Contents:\n----------\n" + new String(tripleStartBuf))); 
+        System.out.format("%s\n\n", ((twoCitiesBuf.length == 0) ? "--- nothing found ---" : "\nFile Contents for '" + twoCities.getFileName() + "':\n----------\n" + new String(twoCitiesBuf))); 
+        System.out.format("%s\n\n", ((deepDownBuf.length == 0) ? "--- nothing found ---" : "\nFile Contents for '" + deepDownFile.getFileName() + "':\n----------\n" + new String(deepDownBuf))); 
+        System.out.format("%s\n\n", ((doubleStartBuf.length == 0) ? "--- nothing found ---" : "\nFile Contents for '" + doubleStart.getFileName() + "':\n----------\n" + new String(doubleStartBuf))); 
+        System.out.format("%s\n\n", ((tripleStartBuf.length == 0) ? "--- nothing found ---" : "\nFile Contents for '" + tripleStart.getFileName() + "':\n----------\n" + new String(tripleStartBuf))); 
     }
 
     /**
