@@ -5,7 +5,7 @@ import java.io.*;
 public class Volume {
     
     private RandomAccessFile file;      // The file that represents the volume the user wishes to open
-    private byte[] fileInBytes;
+    private byte[] fileInBytes;         //
 
     /** 
      * Constructor used to open a file given a file path to that file.

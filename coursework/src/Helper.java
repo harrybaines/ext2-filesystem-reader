@@ -2,7 +2,16 @@ package coursework;
 
 import java.nio.ByteBuffer;
 
+import java.util.List;
+
 public abstract class Helper {
+
+    public static void printPointers(List<Integer> pointers) {
+        System.out.println("----------");
+        for (int i : pointers)
+           System.out.println("pointer: " + i);
+        System.out.println("----------\n");
+    }
 
     /**
      * This method displays a block as a set of hex and corresponding ASCII values.

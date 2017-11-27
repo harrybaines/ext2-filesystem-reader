@@ -42,14 +42,12 @@ public class Ext2File extends DataBlock {
 
         // Print superblock information
         superBlock = new SuperBlock(vol);
-        superBlock.printSuperblockInfo();
+        //superBlock.printSuperblockInfo();
 
         // Populate array with all iNode table pointers from group descriptors
         iNodeTablePointers = getAllINodeTblPointers();
 
         charCount = 0;
-
-        System.out.println("File String: " + fileString);
 
         // Check if file was opened successfully
         if (openFile())
@@ -66,11 +64,8 @@ public class Ext2File extends DataBlock {
         // Obtains all bytes relevant to a given
         int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
         INode iNode = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
-        iNode.printINodeInfo();
-
-        byte[] dirDataBlocks = iNode.getDataBlocksFromPointers();
-
-        return dirDataBlocks;
+        //iNode.printINodeInfo();
+        return iNode.getDataBlocksFromPointers();
     }
 
     /**
@@ -122,7 +117,7 @@ public class Ext2File extends DataBlock {
             int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
             INode iNode = new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock);
             byte[] iNodeInfoBytes = iNode.getINodeInfoBytes();
-            iNode.printINodeInfo();
+            //iNode.printINodeInfo();
 
             ByteBuffer iNodebyteBlockBuffer = ByteBuffer.wrap(iNodeInfoBytes);
             iNodebyteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -131,14 +126,7 @@ public class Ext2File extends DataBlock {
             List<Byte> dataBytes = new ArrayList<Byte>();
 
 
-
-
             byte[] dataBlocksFromPointers = iNodeForFileToOpen.getDataBlocksFromPointers();
-
-
-
-
-
 
             // Transfer all found bytes from data blocks array into buffer
             for (byte b : dataBlocksFromPointers)
@@ -208,15 +196,11 @@ public class Ext2File extends DataBlock {
 
         // Get directory bytes pointed to by iNode 2 direct pointer
         byte[] rootDataBlocks = getDirBytes(2);
-        System.out.println("Directory referenced by iNode 2:");
-        Helper.dumpHexBytes(rootDataBlocks);
         dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);    
         dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
         // Finds the directory specified in the file path string
         while ((curDirString = getCurDirectoryString()) != "") {
-
-            System.out.println("Current directory string to look through: " + curDirString + "\n");
 
             Directory d = new Directory(this);
             d.getFileInfo();
@@ -227,8 +211,6 @@ public class Ext2File extends DataBlock {
             // INode exists and points to a directory
             if (nextINode != null && nextINode.getFileModeAsString().charAt(0) != '-') {
                 rootDataBlocks = getDirBytes(d.getNextINode().getINodeNumber());
-                System.out.println("Directory referenced by iNode " + d.getNextINode().getINodeNumber() + ":");
-                Helper.dumpHexBytes(rootDataBlocks);
                 dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
                 dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
             }
@@ -268,13 +250,6 @@ public class Ext2File extends DataBlock {
             iNodeTablePointers[currentDesc] = groupDescs[currentDesc].getINodeTblPointer();
             currentDesc++;
         }
-
-        // Print found table pointers
-        System.out.println("----------");
-        for (int i = 0; i < iNodeTablePointers.length; i++)
-            System.out.println("iNode table pointer " + i + ": " + iNodeTablePointers[i]);
-        System.out.println("----------");
-
         return iNodeTablePointers;
     }
 

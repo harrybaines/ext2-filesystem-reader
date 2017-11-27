@@ -69,11 +69,11 @@ public class Directory extends DataBlock {
 
         List<String> directoryStrings = getFileInfo();
         
-        System.out.println("\n----------");
+        System.out.println("\n--------------------");
         System.out.println("Directory Listing for " + file.getFileString() + ":\n");
         for (String row : directoryStrings)
             System.out.println(row);
-        System.out.println("\n----------\n");
+        System.out.println("--------------------\n");
     }
 
 
@@ -82,15 +82,7 @@ public class Directory extends DataBlock {
         // Obtain iNode information at current row
         INode currentINode = getINodeFromRow(offset);
 
-        //System.out.println("Currently looking at " + currentINode.getINodeNumber() + " in the directory listing.");
         byte[] INodeBytes = currentINode.getINodeInfoBytes();
-        System.out.print("Current iNode: " + currentINode.getINodeNumber());
-        Helper.dumpHexBytes(INodeBytes);
-
-        // System.out.println("length: " + this.getShortFromBytes(offset + 4, dirDataBuffer));
-        // System.out.println("name len: " + this.getByte(offset + 6, dirDataBuffer));
-        // System.out.println("file type: " + this.getByte(offset + 7, dirDataBuffer));
-        
 
         // Obtain file name given the filename length
         byte[] filenameBytes = new byte[this.getByte(offset + 6, dirDataBuffer)];
@@ -98,8 +90,6 @@ public class Directory extends DataBlock {
             filenameBytes[i] = this.getByte((offset + (8+i)), dirDataBuffer);
         }
         String filenameString = new String(filenameBytes);
-        System.out.println("filename: " + filenameString + "\n");
-        // System.out.println("----------");
 
         // Find the file you're supposed to search for in the current directory listing
         if (filenameString.equals(file.getNextDirectoryString()))

@@ -2,32 +2,40 @@ package coursework;
 
 public class Driver {
 
-    private static final String pathName = "/files/trpl-ind-e";
-
     // API user will use
     public Driver() {
 
+        // Create new volume instance for 'ext2fs'
         Volume vol = new Volume("ext2fs");
-        Ext2File file = new Ext2File(vol, pathName);
 
+        Thread[] threads = new Thread[4];
 
-        byte[] bytes = new byte[7];
-        byte[] allBytes = vol.getFileInBytes();
-        for (int i = 0; i < bytes.length; i++) {
-            bytes[i] = allBytes[i+1024];
-        }
-        System.out.println("LOLOL");
-        Helper.dumpHexBytes(bytes);
+        for (Thread t : threads)
+            t = new Thread();
+        
+        // Create new file instances
+        Ext2File twoCities = new Ext2File(vol, "/two-cities");
+        Ext2File deepDownFile = new Ext2File(vol, "/deep/down/in/the/filesystem/there/lived/a/file");
+        Ext2File doubleStart = new Ext2File(vol, "/files/dbl-ind-s");
+        Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
 
-
-        Directory d = new Directory(file);
-        d.printDirectoryInfo();
+        // Initialise file as a directory (directories = files) and display directory contents
+        new Directory(twoCities).printDirectoryInfo();
+        new Directory(deepDownFile).printDirectoryInfo();
+        new Directory(doubleStart).printDirectoryInfo();
+        new Directory(tripleStart).printDirectoryInfo();
 
         // NEED TO CHANGE - FILE SIZE
-        byte buf[] = file.readFile(0L, 100000);
+        byte twoCitiesBuf[] = twoCities.readFile(0L, 2048);
+        byte deepDownBuf[] = deepDownFile.readFile(0L, 20);
+        byte doubleStartBuf[] = doubleStart.readFile(0L, 21);
+        byte tripleStartBuf[] = tripleStart.readFile(0L, 21);
 
         // WORK ON THIS
-        System.out.format("%s\n\n", ((buf.length == 0) ? "--- nothing found ---" : "File Contents:\n----------\n" + new String(buf))); 
+        System.out.format("%s\n\n", ((twoCitiesBuf.length == 0) ? "--- nothing found ---" : "\nFile Contents:\n----------\n" + new String(twoCitiesBuf))); 
+        System.out.format("%s\n\n", ((deepDownBuf.length == 0) ? "--- nothing found ---" : "\nFile Contents:\n----------\n" + new String(deepDownBuf))); 
+        System.out.format("%s\n\n", ((doubleStartBuf.length == 0) ? "--- nothing found ---" : "\nFile Contents:\n----------\n" + new String(doubleStartBuf))); 
+        System.out.format("%s\n\n", ((tripleStartBuf.length == 0) ? "--- nothing found ---" : "\nFile Contents:\n----------\n" + new String(tripleStartBuf))); 
     }
 
     /**
