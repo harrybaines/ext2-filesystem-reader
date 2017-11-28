@@ -30,7 +30,7 @@ public abstract class Helper {
         
         while (count < bytes.length) {
 
-            StringBuilder sb = new StringBuilder();
+            String hexString = "";
             String asciiString = "";
             byteCount = 0;
 
@@ -38,20 +38,19 @@ public abstract class Helper {
 
                 // Add XX entries for too few bytes
                 if (count >= bytes.length)
-                    sb.append("XX ");
+                    hexString += "XX ";
                 else {
-                    // Obtain hex equivalent of given byte in array     
-                    sb.append(String.format("%02X ", bytes[count]));
+                    // Obtain hex equivalent of given byte in array  
+                    hexString += String.format("%02X ", bytes[count]);
                     byteCount++;
                 }
 
                 if (i == 7 || i == 15)
-                    sb.append("| ");
-
+                    hexString += "| ";
                 count++;
             }
             
-            System.out.print(sb.toString());
+            System.out.print(hexString);
 
             int asciiCount = 0;
 
@@ -61,16 +60,15 @@ public abstract class Helper {
                     asciiString += " ";
                 else {
                     // Obtain ASCII equivalent of given byte in array
-                    int asciiInt = bytes[(count-16) + i] & 0xFF;
+                    int asciiInt = bytes[(count-16) + i] & 0xFFFF;
                     asciiString += (asciiInt > 32 && asciiInt < 127) ? (char) asciiInt : "_";                    
                 }
 
                 if (i == 7 || i == 15)
                     asciiString += " | ";  
-
                 asciiCount++;  
             }
-            
+
             asciiString += "\n";
             System.out.print(asciiString);
         }

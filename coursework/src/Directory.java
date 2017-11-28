@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
-public class Directory extends DataBlock {
+public class Directory extends Ext2File {
     
     private Ext2File file;
 
@@ -56,7 +56,7 @@ public class Directory extends DataBlock {
         while (currentLength < dirDataBuffer.limit()) {
 
             // Add next 'row' to directory string
-            directoryStrings.add(this.getRowAsString(currentLength));
+            directoryStrings.add(this.getDirRowAsString(currentLength));
 
             // Add length to find next entry 'row'
             currentLength += this.getShortFromBytes(currentLength + 4, dirDataBuffer);
@@ -77,7 +77,7 @@ public class Directory extends DataBlock {
     }
 
 
-    public String getRowAsString(int offset) {
+    public String getDirRowAsString(int offset) {
 
         // Obtain iNode information at current row
         INode currentINode = getINodeFromRow(offset);

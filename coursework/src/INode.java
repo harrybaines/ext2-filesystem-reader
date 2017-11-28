@@ -67,9 +67,6 @@ public class INode extends DataBlock {
         List<Byte> allDataBlocks = new ArrayList<Byte>();
         List<Integer> directPointers = this.getDirectPointers();
 
-        // System.out.println("Direct Pointers for iNode " + iNodeNumber + ":");
-        // Helper.printPointers(directPointers);
-
         // Transfer all found data from direct pointers into 'master' list
         for (byte b : this.getDataBlocks(directPointers))
             allDataBlocks.add(b);
@@ -82,12 +79,8 @@ public class INode extends DataBlock {
         // Level 1 of indirection - SINGLE INDIRECT
         if (indirectPointer != 0) {
 
-            indirectionLevel = 1;
-
             // Obtains initial list of indirect pointers to begin indirection traversal
-            List<Integer> indirectTableBlockPointers = this.getIndirectTableBlockPointers(indirectPointer);
-
-            // Helper.printPointers(indirectTableBlockPointers);
+            List<Integer> indirectTableBlockPointers = this.getIndirectBlockPointers(indirectPointer);
 
             // Transfer all found data from indirect pointers into 'master' list
             for (byte b : this.getDataBlocks(indirectTableBlockPointers))
@@ -97,16 +90,11 @@ public class INode extends DataBlock {
         // Level 2 of indirection - DOUBLE INDIRECT
         if (doubleIndirectPointer != 0) {
 
-            indirectionLevel = 2;
-
             // Obtains initial list of indirect pointers to begin indirection traversal
-            List<Integer> indirectTableBlockPointers = this.getIndirectTableBlockPointers(doubleIndirectPointer);
+            List<Integer> indirectTableBlockPointers = this.getIndirectBlockPointers(doubleIndirectPointer);
             
             // Obtains all non-0 pointers from 3 levels of indirection
-            List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(indirectionLevel, indirectTableBlockPointers);
-            
-            // Helper.printPointers(indirectTableBlockPointers);
-            // Helper.printPointers(pointersFromIndirectionLevel);
+            List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(2, indirectTableBlockPointers);
 
             // Transfer all found data from indirect pointers into 'master' list
             for (byte b : this.getDataBlocks(pointersFromIndirectionLevel))
@@ -115,17 +103,12 @@ public class INode extends DataBlock {
 
         // Level 3 of indirection - TRIPLE INDIRECT
         if (tripleIndirectPointer != 0) {
-
-            indirectionLevel = 3;
            
             // Obtains initial list of indirect pointers to begin indirection traversal
-            List<Integer> indirectTableBlockPointers = this.getIndirectTableBlockPointers(tripleIndirectPointer);
+            List<Integer> indirectTableBlockPointers = this.getIndirectBlockPointers(tripleIndirectPointer);
             
             // Obtains all non-0 pointers from 3 levels of indirection
-            List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(indirectionLevel, indirectTableBlockPointers);
-
-            // Helper.printPointers(indirectTableBlockPointers);
-            // Helper.printPointers(pointersFromIndirectionLevel);
+            List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(3, indirectTableBlockPointers);
 
             // Transfer all found data from indirect pointers into 'master' list
             for (byte b : this.getDataBlocks(pointersFromIndirectionLevel))
@@ -153,7 +136,7 @@ public class INode extends DataBlock {
             if (i != 0) {
                 // Get all pointers in the block it points to (get level 2)
                 nextBlockPointer = i;
-                List<Integer> level2Pointers = this.getIndirectTableBlockPointers(nextBlockPointer);
+                List<Integer> level2Pointers = this.getIndirectBlockPointers(nextBlockPointer);
                 
                 if (indirectionLevel >= 2) {
 
@@ -169,7 +152,7 @@ public class INode extends DataBlock {
 
                             nextBlockPointer = j;
 
-                            List<Integer> level3Pointers = this.getIndirectTableBlockPointers(nextBlockPointer);
+                            List<Integer> level3Pointers = this.getIndirectBlockPointers(nextBlockPointer);
                     
                             if (indirectionLevel == 3) {
                                 // Iterate over final block of pointers (level 3)
@@ -350,7 +333,7 @@ public class INode extends DataBlock {
         return (directPointers);
     }
 
-    public List<Integer> getIndirectTableBlockPointers(int blockNum) {
+    public List<Integer> getIndirectBlockPointers(int blockNum) {
 
         int count = 0;
         byte[] indirectTableBytes = this.read(blockNum*superBlock.getBlockSize(), superBlock.getBlockSize());

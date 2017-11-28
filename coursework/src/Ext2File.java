@@ -80,19 +80,15 @@ public class Ext2File extends DataBlock {
      * @param bytes The array of bytes containing file info to be 
      * @return The string of characters in the file.
      */
-    public String printFileContents(byte[] bytes) {
+    public void printFileContents(byte[] bytes, String name) {
 
-        String asciiString = "";
+        String fileContentsString = "";
+        if (bytes.length == 0)
+            fileContentsString += "--- nothing found ---";
+        else
+            fileContentsString += "\nFile Contents for '" + name + "':\n--------------------\n" + new String(bytes);
 
-        // Obtain ASCII equivalent of given byte in array
-        for (byte b : bytes) {
-
-            int asciiInt = b;
-            
-            if (asciiInt >= 1 && asciiInt < 256)
-                asciiString += (char)asciiInt;
-        }
-        return asciiString;
+        System.out.println(fileContentsString + "\n"); 
     }
 
     // public long size() {

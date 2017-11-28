@@ -12,7 +12,10 @@ public class Volume {
      * @param filePath The file path to the volume.
      */
     public Volume(String filePath) { 
-        this.openVolume(filePath);
+        if (this.openVolume(filePath) == 1)
+            System.out.println("File successfully opened!");
+        else
+            System.out.println("Unable to open file.");
     }
 
     /**
