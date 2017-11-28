@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
-public class Directory extends Ext2File {
+public class Directory extends DataBlock {
     
     private Ext2File file;
 
