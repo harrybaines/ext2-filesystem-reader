@@ -42,7 +42,7 @@ public class Driver {
         deepDownFile.printDirectoryInfo();
         dirStart.printDirectoryInfo();
         lostFound.printDirectoryInfo();
-        bigDir.printDirectoryInfo();
+        //bigDir.printDirectoryInfo();
 
         // Reads an array of bytes relevant to chosen file
         byte twoCitiesBuf[] = twoCities.readFile(0L, twoCities.size());
@@ -67,8 +67,8 @@ public class Driver {
         indEnd.printFileContents(indEndBuf);
         doubleStart.printFileContents(doubleStartBuf);
         doubleEnd.printFileContents(doubleEndBuf);
-        tripleStart.printFileContents(tripleStartBuf);
-        tripleEnd.printFileContents(tripleEndBuf);
+        // tripleStart.printFileContents(tripleStartBuf);
+        // tripleEnd.printFileContents(tripleEndBuf);
 
         System.out.println("Time to open all files: " + (System.currentTimeMillis() - startTime) + "ms");
     }

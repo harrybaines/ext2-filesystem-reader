@@ -85,21 +85,22 @@ public abstract class Helper {
         System.out.println("\n--------------------");
         System.out.println("Superblock Information:");
         System.out.println("--------------------");
-        System.out.println("Total number of inodes:      " + superBlock.getTotaliNodes());
-        System.out.println("Total number of blocks:      " + superBlock.getTotalBlocks());
-        System.out.println("Block size (bytes):          " + superBlock.getBlockSize());
-        System.out.println("No. of blocks per group:     " + superBlock.getBlocksPerGroup());
-        System.out.println("No. of inodes per group:     " + superBlock.getiNodesPerGroup());
-        System.out.println("Magic number:                " + superBlock.getMagicNumber());
-        System.out.println("Size of each inode (bytes):  " + superBlock.getiNodeSize());
-        System.out.println("Volume label (disk name):    " + superBlock.getVolumeLbl());
+        System.out.println("Total number of inodes:      "  + superBlock.getTotaliNodes());
+        System.out.println("Total number of blocks:      "  + superBlock.getTotalBlocks());
+        System.out.println("Block size (bytes):          "  + superBlock.getBlockSize());
+        System.out.println("No. of blocks per group:     "  + superBlock.getBlocksPerGroup());
+        System.out.println("No. of inodes per group:     "  + superBlock.getiNodesPerGroup());
+        System.out.println("Magic number:                "  + superBlock.getMagicNumber());
+        System.out.println("Size of each inode (bytes):  "  + superBlock.getiNodeSize());
+        System.out.println("Volume label (disk name):    '" + superBlock.getVolumeLbl() + "'");
         System.out.println("--------------------");
         System.out.println("Further Information:");
         System.out.println("----------");
         System.out.println("iNode table size (blocks):   " + superBlock.getiNodeTableSize());
         System.out.println("iNode table size (bytes):    " + superBlock.getiNodeTableSize() * superBlock.getBlockSize());
-        System.out.println("iNodes per iNode table:      " + superBlock.getiNodesPerGroup() + "\n(see iNodes per group)");
+        System.out.println("Total no. of block groups:   " + (int) Math.ceil((double)superBlock.getTotalBlocks() / superBlock.getBlocksPerGroup()));
         System.out.println("Total volume size (bytes):   " + superBlock.getTotalBlocks() * superBlock.getBlockSize());
+        System.out.println("Number of group descriptors: " + (int) Math.ceil((double)superBlock.getTotalBlocks() / superBlock.getBlocksPerGroup()));
         System.out.println("--------------------\n");
     }
 
@@ -119,7 +120,6 @@ public abstract class Helper {
         System.out.println("Deleted Time:                           "   + iNode.getDeletedTime());
         System.out.println("Group ID of owner:                      "   + iNode.getGroupID());
         System.out.println("Number of hard links referencing file:  "   + iNode.getNumHardLinks());
-        //System.out.println("Pointer to first block:                 "   + getDirectPointers()[0]); // PRINT ALL POINTERS!
         System.out.println("----------\n");
     }
 }

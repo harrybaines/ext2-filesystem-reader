@@ -24,6 +24,7 @@ public class Ext2File extends DataBlock {
 
     private ByteBuffer dirDataBuffer;   /* Buffer to store all bytes relevant to the current directory */
     private SuperBlock superBlock;      /* Stores a reference to the super block for file system information */
+    private List<String> fileInfoList;
 
     private String curDirString;        /* Stores the name of the current directory under consideration */
     private int charCount;              /* Used to split the current directory string into parts */
@@ -43,6 +44,7 @@ public class Ext2File extends DataBlock {
         this.filePathString = filePathString;
 
         charCount = 0;
+        fileInfoList = new ArrayList<String>();
         superBlock = vol.getSuperblock();
 
         // Open this new file
@@ -67,7 +69,7 @@ public class Ext2File extends DataBlock {
 
             // Traverse sub-directory from the root
             dir = new Directory(this);
-            dir.getFileInfo();
+            fileInfoList = dir.getFileInfo();
 
             // Check to see if current directory using the file path string actually exists!
             INode nextINode = dir.getNextINode();
@@ -88,12 +90,12 @@ public class Ext2File extends DataBlock {
 
     public void printDirectoryInfo() {
         
-        System.out.println("\n--------------------");
+        System.out.println("\n------------------------------------------------------------");
         System.out.println("Directory Listing for " + getFileString() + ":\n");
 
         // Print out directory contents of a directory
         if (iNodeForFileToOpen != null && iNodeForFileToOpen.getFileModeAsString().charAt(0) == 'd') {
-            for (String row : dir.getFileInfo())
+            for (String row : fileInfoList)
                 System.out.println(row);
         }
         // If not a directory, print contents of directory the file exists in
@@ -102,7 +104,7 @@ public class Ext2File extends DataBlock {
             for (String row : fileDir.getFileInfo())
                 System.out.println(row);
         }
-        System.out.println("--------------------\n");
+        System.out.println("------------------------------------------------------------\n");
     }
 
     /** 
@@ -118,7 +120,7 @@ public class Ext2File extends DataBlock {
         return iNode.getDataBlocksFromPointers();
     }
 
-    /**
+    /** ISSSUE
      * Simple method to print the contents of a file in ASCII format.
      * A string is returned containing the full file contents.
      *
@@ -127,6 +129,8 @@ public class Ext2File extends DataBlock {
      * @return The string of characters in the file.
      */
     public void printFileContents(byte[] bytes) {
+
+        System.out.println("LENGTH: " + bytes.length); // ISSUE
 
         String fileContentsString = "";
         if (bytes.length == 0)
@@ -152,6 +156,7 @@ public class Ext2File extends DataBlock {
             return new byte[0];
 
         byte[] byteArray = new byte[(int)length];
+        ByteBuffer dataBytesBuffer = ByteBuffer.wrap(byteArray);
 
         if (iNodeForFileToOpen != null) {
 
@@ -160,20 +165,13 @@ public class Ext2File extends DataBlock {
             int tablePointerIndex = getTablePointerForiNode(iNodeNumber, this.getVolume().getSuperblock().getiNodesPerGroup(), this.getVolume().getSuperblock().getTotaliNodes());
             INode iNode = new INode(iNodeNumber, this.getVolume().getSuperblock().getiNodeTablePointers()[tablePointerIndex], tablePointerIndex, superBlock);
 
-            // Obtain iNode for all direct pointers if they exist
-            List<Byte> dataBytes = new ArrayList<Byte>();
-
-
             byte[] dataBlocksFromPointers = iNodeForFileToOpen.getDataBlocksFromPointers();
-
-            // Transfer all found bytes from data blocks array into buffer
-            for (byte b : dataBlocksFromPointers)
-                dataBytes.add(b);
+            ByteBuffer dataBlocksBuffer = ByteBuffer.wrap(dataBlocksFromPointers);
 
             for (int i = (int)startByte; i < byteArray.length; i++) {
-                if (i >= dataBlocksFromPointers.length)
+                if (i >= dataBlocksBuffer.limit())
                     break;
-                byteArray[i] = dataBlocksFromPointers[i];
+                dataBytesBuffer.put(dataBlocksBuffer.get(i));
             }
 
         }
@@ -182,7 +180,7 @@ public class Ext2File extends DataBlock {
             byteArray = new byte[0];
         }
 
-        return byteArray;
+        return dataBytesBuffer.array();
     }
 
     /**

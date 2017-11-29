@@ -39,7 +39,7 @@ public class DataBlock {
      */
     public byte[] read(long startByte, long length) {
 
-        byte[] specifiedBytes = new byte[(int) length];
+        byte[] specifiedBytes = new byte[(int) length]; //SLOW?
 
         for (int curByte = 0; curByte < length; curByte++) {
 
@@ -101,7 +101,7 @@ public class DataBlock {
     public byte getUnsignedByte(int i, ByteBuffer b) {
         return ((byte) (b.get(i) & 0xFF));
     }
-    
+
     /**
      * Returns the byte buffer which stores bytes in this data block.
      * @return The byte buffer of data block bytes.

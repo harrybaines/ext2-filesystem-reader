@@ -85,7 +85,7 @@ public class Directory extends DataBlock {
 
         // Obtain user ID (root etc.)
         String users = "";
-        users += (currentINode.getUserID() == 0) ? "root  " : Integer.toString(currentINode.getUserID()) + "  ";   // User ID of owner
+        users += (currentINode.getUserID() == 0) ? "root " : Integer.toString(currentINode.getUserID()) + " ";   // User ID of owner
         users += (currentINode.getGroupID() == 0) ? "root" : Integer.toString(currentINode.getGroupID());        // Group ID of owner
 
         // Obtain file name given the filename length
@@ -95,14 +95,9 @@ public class Directory extends DataBlock {
         }
         String filenameStr = new String(fileNameBytes);
 
-        // Unix-style directory listing for iNode 2
-        String rowString = currentINode.getFileModeAsString() + "  " + users + "  " + Integer.toString(currentINode.getNumHardLinks()) + "  " 
-                            + Long.toString(currentINode.getTotalFileSize());
-
-        for (int i = 1; i <= 12 - (int)(Math.log10(currentINode.getTotalFileSize())+1); i++)
-            rowString += " ";
-
-        rowString += " " + currentINode.getLastModifiedTime() + "  " + filenameStr; 
+        // Unix-style directory listing for a given iNode
+        String rowString = currentINode.getFileModeAsString() + "  " + Integer.toString(currentINode.getNumHardLinks()) + "  " + users + "  " 
+                            + String.format("%13s", Long.toString(currentINode.getTotalFileSize())) + "  " + currentINode.getLastModifiedTime() + " " + filenameStr; 
 
         return rowString;
     }

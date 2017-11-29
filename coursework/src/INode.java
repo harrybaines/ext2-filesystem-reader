@@ -64,12 +64,9 @@ public class INode extends DataBlock {
 
         int indirectionLevel = 0;
 
-        List<Byte> allDataBlocks = new ArrayList<Byte>();
+        // SLOW SOMEWHERE
         List<Integer> directPointers = this.getDirectPointers();
-
-        // Transfer all found data from direct pointers into 'master' list
-        for (byte b : this.getDataBlocks(directPointers))
-            allDataBlocks.add(b);
+        List<Byte> allDataBlocks = this.getDataBlocks(directPointers);
 
         // Find indirect pointers and search through blocks to find data blocks
         int indirectPointer = this.getIndirectPointer();                // Initial indirect pointer in iNode
@@ -168,6 +165,7 @@ public class INode extends DataBlock {
         return blockPointers;
     }
 
+    // COULD BE SLOW
     public List<Byte> getDataBlocks(List<Integer> pointers) {
 
         // Create array of data blocks found from indirect pointers
@@ -176,9 +174,8 @@ public class INode extends DataBlock {
         for (int i : pointers) {
             if (i != 0) {
                 byte[] dataBlocksArray = this.read(i * superBlock.getBlockSize(), superBlock.getBlockSize());
-                for (int curBlock = 0; curBlock < dataBlocksArray.length; curBlock++) {
+                for (int curBlock = 0; curBlock < dataBlocksArray.length; curBlock++)
                     byteList.add(dataBlocksArray[curBlock]);
-                }
             }
         }
         return byteList;
