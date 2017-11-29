@@ -130,9 +130,9 @@ public class Ext2File extends DataBlock {
 
         String fileContentsString = "";
         if (bytes.length == 0)
-            fileContentsString += "--- nothing found ---";
+            fileContentsString += "\n----------\nNo file contents for " + this.filePathString + "\n----------\n";
         else
-            fileContentsString += "\nFile Contents for '" + filePathString + "':\n--------------------\n" + new String(bytes);
+            fileContentsString += "\n----------\nFile Contents for '" + filePathString + "':\n----------\n" + new String(bytes) + "----------\n";
 
         System.out.println(fileContentsString + "\n"); 
     }
@@ -178,7 +178,7 @@ public class Ext2File extends DataBlock {
 
         }
         else {
-            System.out.println("File not found/selected - unable to open file specified!");
+            System.out.println("\n----------\n" + this.filePathString + " not a file - may be a directory.\n----------");
             byteArray = new byte[0];
         }
 
@@ -224,7 +224,10 @@ public class Ext2File extends DataBlock {
      * @return The file size.
      */
     public long size() {
-        return this.iNodeForFileToOpen.getTotalFileSize();
+        if (this.iNodeForFileToOpen != null)
+            return this.iNodeForFileToOpen.getTotalFileSize();
+        else
+            return 0;
     }
 
     /**

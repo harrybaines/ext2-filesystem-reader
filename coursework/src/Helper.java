@@ -25,7 +25,7 @@ public abstract class Helper {
         int count = 0;
         int byteCount = 0;
 
-        System.out.println("\nByte Count: " + bytes.length);
+        System.out.println("\n----------\nByte Count: " + bytes.length);
         System.out.println("----------");
         
         while (count < bytes.length) {

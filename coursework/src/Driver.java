@@ -26,7 +26,7 @@ public class Driver {
         // Create new file instances
         Ext2File twoCities = new Ext2File(vol, "/two-cities");
         Ext2File deepDownFile = new Ext2File(vol, "/deep/down/in/the/filesystem/there/lived/a/file");
-        Ext2File dirStart = new Ext2File(vol, "/files/dir-s");
+        Ext2File dirStart = new Ext2File(vol, "/files");
         Ext2File dirEnd = new Ext2File(vol, "/files/dir-e");
         Ext2File indStart = new Ext2File(vol, "/files/ind-s");
         Ext2File indEnd = new Ext2File(vol, "/files/ind-e");
