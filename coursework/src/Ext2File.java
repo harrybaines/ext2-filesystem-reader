@@ -65,6 +65,7 @@ public class Ext2File extends DataBlock {
         // Finds the directory specified in the file path string
         while ((curDirString = getCurDirectoryString()) != "") {
 
+            // Traverse sub-directory from the root
             dir = new Directory(this);
             dir.getFileInfo();
 
@@ -80,6 +81,8 @@ public class Ext2File extends DataBlock {
             // INode exists and points to a file
             else if (nextINode != null)
                 iNodeForFileToOpen = nextINode;
+
+            this.fileName = curDirString;
         }   
     }
 
@@ -119,16 +122,17 @@ public class Ext2File extends DataBlock {
      * Simple method to print the contents of a file in ASCII format.
      * A string is returned containing the full file contents.
      *
-     * @param bytes The array of bytes containing file info to be 
+     * @param bytes The array of bytes containing file info to be printed.
+     * @param fileName The name of the file to print.
      * @return The string of characters in the file.
      */
-    public void printFileContents(byte[] bytes, String name) {
+    public void printFileContents(byte[] bytes) {
 
         String fileContentsString = "";
         if (bytes.length == 0)
             fileContentsString += "--- nothing found ---";
         else
-            fileContentsString += "\nFile Contents for '" + name + "':\n--------------------\n" + new String(bytes);
+            fileContentsString += "\nFile Contents for '" + filePathString + "':\n--------------------\n" + new String(bytes);
 
         System.out.println(fileContentsString + "\n"); 
     }

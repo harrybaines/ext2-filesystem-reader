@@ -155,10 +155,14 @@ public class INode extends DataBlock {
                                 for (int k : level3Pointers)
                                     if (k != 0)
                                         blockPointers.add(k);
-                            }                        
+                            }    
+                            else
+                                break; 
                         }
                     }
                 }
+                else
+                    break;
             }
         }
         return blockPointers;

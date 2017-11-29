@@ -37,7 +37,6 @@ public class Driver {
         Ext2File lostFound = new Ext2File(vol, "/lost+found");
         Ext2File bigDir = new Ext2File(vol, "/big-dir");
 
-
         // Prints the directory information relevant to a given file
         twoCities.printDirectoryInfo();
         deepDownFile.printDirectoryInfo();
@@ -60,16 +59,16 @@ public class Driver {
         byte tripleEndBuf[] = tripleEnd.readFile(0L, tripleEnd.size());
 
         // Read file contents using pre-built print method
-        twoCities.printFileContents(twoCitiesBuf, twoCities.getFileName());
-        deepDownFile.printFileContents(deepDownBuf, deepDownFile.getFileName());
-        dirStart.printFileContents(dirStartBuf, dirStart.getFileName());
-        dirEnd.printFileContents(dirEndBuf, dirEnd.getFileName());
-        indStart.printFileContents(indStartBuf, indStart.getFileName());
-        indEnd.printFileContents(indEndBuf, indEnd.getFileName());
-        doubleStart.printFileContents(doubleStartBuf, doubleStart.getFileName());
-        doubleEnd.printFileContents(doubleEndBuf, doubleEnd.getFileName());
-        tripleStart.printFileContents(tripleStartBuf, tripleStart.getFileName());
-        tripleEnd.printFileContents(tripleEndBuf, tripleEnd.getFileName());
+        twoCities.printFileContents(twoCitiesBuf);
+        deepDownFile.printFileContents(deepDownBuf);
+        dirStart.printFileContents(dirStartBuf);
+        dirEnd.printFileContents(dirEndBuf);
+        indStart.printFileContents(indStartBuf);
+        indEnd.printFileContents(indEndBuf);
+        doubleStart.printFileContents(doubleStartBuf);
+        doubleEnd.printFileContents(doubleEndBuf);
+        tripleStart.printFileContents(tripleStartBuf);
+        tripleEnd.printFileContents(tripleEndBuf);
 
         System.out.println("Time to open all files: " + (System.currentTimeMillis() - startTime) + "ms");
     }
