@@ -135,12 +135,10 @@ public class INode extends DataBlock {
             
             if (i != 0) {
                 // Get all pointers in the block it points to (get level 2)
-                nextBlockPointer = i;
-                List<Integer> level2Pointers = this.getIndirectBlockPointers(nextBlockPointer);
+                List<Integer> level2Pointers = this.getIndirectBlockPointers(i);
                 
+                // Iterate over 2nd block of pointers (level 2)
                 if (indirectionLevel >= 2) {
-
-                    // Iterate over 2nd block of pointers (level 2)
                     for (int j : level2Pointers) {
 
                         // Get all pointers in the block it points to (get level 3)
@@ -150,26 +148,17 @@ public class INode extends DataBlock {
                             if (indirectionLevel == 2)
                                 blockPointers.add(j);
 
-                            nextBlockPointer = j;
-
-                            List<Integer> level3Pointers = this.getIndirectBlockPointers(nextBlockPointer);
-                    
+                            List<Integer> level3Pointers = this.getIndirectBlockPointers(j);
+                            
+                            // Iterate over final block of pointers (level 3)
                             if (indirectionLevel == 3) {
-                                // Iterate over final block of pointers (level 3)
-                                for (int k : level3Pointers) {
-
-                                    // Get pointers to data from level 3
+                                for (int k : level3Pointers)
                                     if (k != 0)
                                         blockPointers.add(k);
-                                }
-                            }
-                            else
-                                break;                            
+                            }                        
                         }
                     }
                 }
-                else
-                    break;
             }
         }
         return blockPointers;
@@ -189,26 +178,6 @@ public class INode extends DataBlock {
             }
         }
         return byteList;
-    }
-
-    /**
-     * Outputs all fields relevant to a given iNode.
-     */
-    public void printINodeInfo() {
-        System.out.println("\n----------");
-        System.out.println("iNode " + iNodeNumber + " information: ");
-        System.out.println("----------");
-        System.out.println("File mode:                              0x" + String.format("%02X ", getFileMode()));
-        System.out.println("User ID:                                "   + getUserID());
-        System.out.println("File Size (bytes):                      "   + getLowerFileSize());
-        System.out.println("Last Access Time:                       "   + getLastAccessTime());
-        System.out.println("Creation Time:                          "   + getCreationTime());
-        System.out.println("Last Modified Time:                     "   + getLastModifiedTime());
-        System.out.println("Deleted Time:                           "   + getDeletedTime());
-        System.out.println("Group ID of owner:                      "   + getGroupID());
-        System.out.println("Number of hard links referencing file:  "   + getNumHardLinks());
-        //System.out.println("Pointer to first block:                 "   + getDirectPointers()[0]); // PRINT ALL POINTERS!
-        System.out.println("----------\n");
     }
 
     /**
@@ -379,6 +348,15 @@ public class INode extends DataBlock {
      * @return Upper 32 bit size of file in bytes.
      */
     public int getUpperFileSize() {
-        return (this.getIntFromBytes(140, iNodeBuffer));
+        return (this.getIntFromBytes(108, iNodeBuffer));
+    }
+
+    /**
+     * Combines the upper and lower 32 bit file sizes into 1 64 bit file size.
+     * @return The size of the file referenced by this iNode.
+     */
+    public long getTotalFileSize() {
+        long totalSize = (long) this.getUpperFileSize() << 32 | this.getLowerFileSize() & 0xFFFFFFFFL;
+        return totalSize;
     }
 }

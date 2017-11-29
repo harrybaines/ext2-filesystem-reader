@@ -17,6 +17,7 @@ public class Volume {
     
     private RandomAccessFile file;      /* The file that represents the volume the user wishes to open */
     private byte[] fileInBytes;         /* Array of bytes to store the entire volume */
+    private SuperBlock superBlock;
 
     /** 
      * Constructor used to open a file given a file path to that file.
@@ -30,6 +31,8 @@ public class Volume {
             System.out.println("Couldn't find and open the file.");
             System.exit(0);
         }
+
+        this.superBlock = new SuperBlock(this);
     }
 
     /**
@@ -42,7 +45,15 @@ public class Volume {
         this.fileInBytes = new byte[(int) this.file.length()];
         this.file.readFully(this.fileInBytes);
         return true;
-    }   
+    } 
+
+    /**
+     * Obtains the reference to the superblock.
+     * @return The superblock instance.
+     */
+    public SuperBlock getSuperblock() {
+        return this.superBlock;
+    }  
 
     /**
      * Returns the entire volume in the form of an array of bytes.

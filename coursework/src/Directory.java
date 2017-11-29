@@ -3,40 +3,39 @@ package coursework;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-
+/** 
+ * Name: Directory
+ * 
+ * This class represents a directory in a given volume.
+ * In this example in the ext2 filsystem, directories are treated as files, hence a reference to the file in this directory is stored.
+ * The user can choose to output the directory listing for a given file/directory.
+ *
+ * @author Harry Baines
+ * @see DataBlock
+ */
 public class Directory extends DataBlock {
     
-    private Ext2File file;
+    private Ext2File file;                  /* Reference to the file - would print directory contents for this file once instance is created */
 
-    private ByteBuffer dirDataBuffer;
-    private int[] iNodeTablePointers;
-    private SuperBlock superBlock;
+    private ByteBuffer dirDataBuffer;       /* Buffer to store bytes in this directory */
+    private SuperBlock superBlock;          /* Stores a reference to the super block for file system information */
 
-    private boolean fileFoundInDirectory;
+    private boolean fileFoundInDirectory;   /* Boolean to check if a file was found in this directory */
+    private INode nextINode;                /* Stores the iNode of the next file in this directory */
 
-    private INode nextINode;
-
+    /**
+     * Constructor to initialise a directory with a given file and initialise relevant instance variables.
+     * @param file The file the user wishes to view the directory listing for.
+     */
     public Directory(Ext2File file) {
         super(file.getVolume());
         this.file = file;
         this.dirDataBuffer = file.getDirDataBuffer();
-        this.iNodeTablePointers = file.getiNodeTablePointers();
-        this.superBlock = file.getSuperblock();
+        this.superBlock = file.getVolume().getSuperblock();
         this.fileFoundInDirectory = false;
-    }
-
-    public boolean fileWasFoundInDirectory() {
-        return this.fileFoundInDirectory;
-    }
-
-    public INode getNextINode() {
-        return this.nextINode;
     }
 
     /**
@@ -65,17 +64,6 @@ public class Directory extends DataBlock {
         return directoryStrings;
     }
 
-    public void printDirectoryInfo() {
-
-        List<String> directoryStrings = getFileInfo();
-        
-        System.out.println("\n--------------------");
-        System.out.println("Directory Listing for " + file.getFileString() + ":\n");
-        for (String row : directoryStrings)
-            System.out.println(row);
-        System.out.println("--------------------\n");
-    }
-
 
     public String getDirRowAsString(int offset) {
 
@@ -97,7 +85,7 @@ public class Directory extends DataBlock {
 
         // Obtain user ID (root etc.)
         String users = "";
-        users += (currentINode.getUserID() == 0) ? "root " : Integer.toString(currentINode.getUserID()) + " ";   // User ID of owner
+        users += (currentINode.getUserID() == 0) ? "root  " : Integer.toString(currentINode.getUserID()) + "  ";   // User ID of owner
         users += (currentINode.getGroupID() == 0) ? "root" : Integer.toString(currentINode.getGroupID());        // Group ID of owner
 
         // Obtain file name given the filename length
@@ -108,8 +96,13 @@ public class Directory extends DataBlock {
         String filenameStr = new String(fileNameBytes);
 
         // Unix-style directory listing for iNode 2
-        String rowString = currentINode.getFileModeAsString() + " " + users + " " + Integer.toString(currentINode.getNumHardLinks()) + " " 
-                            + Integer.toString(currentINode.getLowerFileSize()) + " " + currentINode.getLastModifiedTime() + " " + filenameStr; 
+        String rowString = currentINode.getFileModeAsString() + "  " + users + "  " + Integer.toString(currentINode.getNumHardLinks()) + "  " 
+                            + Long.toString(currentINode.getTotalFileSize());
+
+        for (int i = 1; i <= 12 - (int)(Math.log10(currentINode.getTotalFileSize())+1); i++)
+            rowString += " ";
+
+        rowString += " " + currentINode.getLastModifiedTime() + "  " + filenameStr; 
 
         return rowString;
     }
@@ -120,6 +113,22 @@ public class Directory extends DataBlock {
 
         int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
 
-        return (new INode(iNodeNumber, iNodeTablePointers[tablePointerIndex], tablePointerIndex, superBlock));
+        return (new INode(iNodeNumber, superBlock.getiNodeTablePointers()[tablePointerIndex], tablePointerIndex, superBlock));
+    }
+
+    /** 
+     * Checks if a file was found successfully in the directory currently being searched in.
+     * @return true if a file was found in this directory.
+     */
+    public boolean fileWasFoundInDirectory() {
+        return this.fileFoundInDirectory;
+    }
+
+    /**
+     * Returns the iNode of the next row in the directory listing.
+     * @return The iNode instance of the next row.
+     */
+    public INode getNextINode() {
+        return this.nextINode;
     }
 }

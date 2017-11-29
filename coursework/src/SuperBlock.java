@@ -14,6 +14,8 @@ public class SuperBlock extends DataBlock {
     private int iNodeSize;
     private String volumeLbl;
 
+    private int[] iNodeTablePointers;
+
     public SuperBlock(Volume vol) {
         super(vol);
         this.setSuperblockValues();
@@ -27,6 +29,8 @@ public class SuperBlock extends DataBlock {
         byte[] block = this.read(1 * this.getBlockSize(), this.getBlockSize());
         ByteBuffer byteBlockBuffer = ByteBuffer.wrap(block);
         byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        iNodeTablePointers = this.getAllINodeTblPointers();
         
         // Obtain hex and ASCII values of bytes in superblock
         //Helper.dumpHexBytes(block);
@@ -51,6 +55,44 @@ public class SuperBlock extends DataBlock {
             int asciiInt = this.getByteBuffer().get(blockSize + 120 + i);
             volumeLbl += (char) asciiInt;
         }
+    }
+
+    /**
+     * Retrieves an array of all iNode table pointers from the group descriptors.
+     * The method uses block group 0 to access all group descriptors.
+     *
+     * @return The array of all integer iNode table pointers.
+     */
+    private int[] getAllINodeTblPointers() {
+
+        // Obtains array of iNode table pointers from all group descriptors
+        int numBlockGroups = (int) Math.ceil((double) this.getTotalBlocks() / (double) this.getBlocksPerGroup());
+
+        GroupDescriptor[] groupDescs = new GroupDescriptor[numBlockGroups];
+        int[] iNodeTablePointers = new int[numBlockGroups];
+
+        // Finds the group descriptors using block group 0 (1024 bytes after superblock)
+        byte[] groupDescBytes = this.read(2 * this.getBlockSize(), numBlockGroups * GroupDescriptor.GROUP_DESCRIPTOR_SIZE);
+        ByteBuffer groupDescBuffer = ByteBuffer.wrap(groupDescBytes);
+        groupDescBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        int currentDesc = 0;
+
+        // Create new GroupDescriptor instances to obtain iNode table pointers
+        while (currentDesc < numBlockGroups) {
+            groupDescs[currentDesc] = new GroupDescriptor(groupDescBuffer, currentDesc, this);
+            iNodeTablePointers[currentDesc] = groupDescs[currentDesc].getINodeTblPointer();
+            currentDesc++;
+        }
+        return iNodeTablePointers;
+    }
+
+    /**
+     * Obtains the list of all iNode table pointers found in the group descriptors.
+     * @return List of iNode table pointers.
+     */
+    public int[] getiNodeTablePointers() {
+        return this.iNodeTablePointers;
     }
 
     public int getTotaliNodes() {
@@ -87,32 +129,5 @@ public class SuperBlock extends DataBlock {
 
     public int getiNodeTableSize() {
         return (this.getiNodesPerGroup() * this.getiNodeSize() / (this.getBlockSize()));
-    }
-
-    /** 
-     * Method to print all information containined within the superblock.
-     * The superblock holds characteristics of the filesystem.
-     * Further information is printed, which is derived from the superblock fields.
-     */
-    public void printSuperblockInfo() {
-        System.out.println("\n--------------------");
-        System.out.println("Superblock Information:");
-        System.out.println("--------------------");
-        System.out.println("Total number of inodes:      " + this.getTotaliNodes());
-        System.out.println("Total number of blocks:      " + this.getTotalBlocks());
-        System.out.println("Block size (bytes):          " + this.getBlockSize());
-        System.out.println("No. of blocks per group:     " + this.getBlocksPerGroup());
-        System.out.println("No. of inodes per group:     " + this.getiNodesPerGroup());
-        System.out.println("Magic number:                " + this.getMagicNumber());
-        System.out.println("Size of each inode (bytes):  " + this.getiNodeSize());
-        System.out.println("Volume label (disk name):    " + this.getVolumeLbl());
-        System.out.println("--------------------");
-        System.out.println("Further Information:");
-        System.out.println("----------");
-        System.out.println("iNode table size (blocks):   " + this.getiNodeTableSize());
-        System.out.println("iNode table size (bytes):    " + this.getiNodeTableSize() * this.getBlockSize());
-        System.out.println("iNodes per iNode table:      " + this.getiNodesPerGroup() + "\n(see iNodes per group)");
-        System.out.println("Total volume size (bytes):   " + this.getTotalBlocks() * this.getBlockSize());
-        System.out.println("--------------------\n");
     }
 }

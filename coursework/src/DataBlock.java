@@ -101,23 +101,7 @@ public class DataBlock {
     public byte getUnsignedByte(int i, ByteBuffer b) {
         return ((byte) (b.get(i) & 0xFF));
     }
-
-    // /**
-    //  * Method to obtain an unsigned short from a signed 2s complement integer (byte) from the byte buffer.
-    //  * @return Unsigned integer value.
-    //  */
-    // public int getUnsignedShortFromBytes(int i, ByteBuffer b) {
-    //     return (b.getShort(i) & 0xFFFF);
-    // }
-
-    // /**
-    //  * Method to obtain an unsigned integer from a signed 2s complement integer (byte) from the byte buffer.
-    //  * @return Unsigned integer value.
-    //  */
-    // public int getUnsignedIntFromBytes(int i, ByteBuffer b) {
-    //     return (b.getInt(i) & 0xFFFFFFFF);
-    // }
-
+    
     /**
      * Returns the byte buffer which stores bytes in this data block.
      * @return The byte buffer of data block bytes.

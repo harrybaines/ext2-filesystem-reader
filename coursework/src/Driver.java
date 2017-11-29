@@ -1,14 +1,27 @@
 package coursework;
 
+/**
+ * Name: Driver
+ *
+ * This class allows the user to open several files that are contained within the given volume they provide.
+ * In this example, the user opens many files located within the ext2 filesystem.
+ * The user can open these files and view their contents if they are regular files.
+ * Also, the user can view a directory listing for a file or a directory they choose.
+ *
+ * @author Harry Baines
+ */
 public class Driver {
 
-    // API user will use
+    /** 
+     * Constructor to initialise new files within the volume the user provides.
+     */
     public Driver() {
 
         long startTime = System.currentTimeMillis();
 
-        // Create new volume instance for 'ext2fs'
+        // Create new volume instance for 'ext2fs' and print the super block info
         Volume vol = new Volume("ext2fs");
+        Helper.printSuperblockInfo(vol.getSuperblock());
         
         // Create new file instances
         Ext2File twoCities = new Ext2File(vol, "/two-cities");
@@ -24,28 +37,27 @@ public class Driver {
         Ext2File lostFound = new Ext2File(vol, "/lost+found");
         Ext2File bigDir = new Ext2File(vol, "/big-dir");
 
-        // Initialise file as a directory (directories = files) and display directory contents
 
-        // WORK ON THIS
-        //twoCities.printDirectoryInfo();
+        // Prints the directory information relevant to a given file
+        twoCities.printDirectoryInfo();
+        deepDownFile.printDirectoryInfo();
+        dirStart.printDirectoryInfo();
+        lostFound.printDirectoryInfo();
+        bigDir.printDirectoryInfo();
 
-        new Directory(twoCities).printDirectoryInfo();
-        new Directory(deepDownFile).printDirectoryInfo();
-        new Directory(dirStart).printDirectoryInfo();
-        new Directory(lostFound).printDirectoryInfo();
-        new Directory(bigDir).printDirectoryInfo();
+        // Reads an array of bytes relevant to chosen file
+        byte twoCitiesBuf[] = twoCities.readFile(0L, twoCities.size());
+        byte deepDownBuf[] = deepDownFile.readFile(0L, deepDownFile.size());
+        Helper.dumpHexBytes(deepDownBuf);
 
-        // FIX FILE SIZES
-        byte twoCitiesBuf[] = twoCities.readFile(0L, 2048);
-        byte deepDownBuf[] = deepDownFile.readFile(0L, 20);
-        byte dirStartBuf[] = dirStart.readFile(0L, 21);
-        byte dirEndBuf[] = dirEnd.readFile(0L, 21);
-        byte indStartBuf[] = indStart.readFile(0L, 21);
-        byte indEndBuf[] = indEnd.readFile(0L, 21);
-        byte doubleStartBuf[] = doubleStart.readFile(0L, 21);
-        byte doubleEndBuf[] = doubleEnd.readFile(0L, 21);
-        byte tripleStartBuf[] = tripleStart.readFile(0L, 21);
-        byte tripleEndBuf[] = tripleEnd.readFile(0L, 21);
+        byte dirStartBuf[] = dirStart.readFile(0L, dirStart.size());
+        byte dirEndBuf[] = dirEnd.readFile(0L, dirEnd.size());
+        byte indStartBuf[] = indStart.readFile(0L, indStart.size());
+        byte indEndBuf[] = indEnd.readFile(0L, indEnd.size());
+        byte doubleStartBuf[] = doubleStart.readFile(0L, doubleStart.size());
+        byte doubleEndBuf[] = doubleEnd.readFile(0L, doubleEnd.size());
+        byte tripleStartBuf[] = tripleStart.readFile(0L, tripleStart.size());
+        byte tripleEndBuf[] = tripleEnd.readFile(0L, tripleEnd.size());
 
         // Read file contents using pre-built print method
         twoCities.printFileContents(twoCitiesBuf, twoCities.getFileName());
