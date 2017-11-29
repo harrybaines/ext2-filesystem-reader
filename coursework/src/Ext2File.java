@@ -30,6 +30,8 @@ public class Ext2File extends DataBlock {
 
     private INode iNodeForFileToOpen;   // Stores the iNode for the file which is to be opened
 
+    private boolean isDirectory;        /* Boolean which checks if the file is a directory or a regular file */
+
     /**
      * Constructor used to represent a file in the given volume.
      * The file can then be read and output to the user and can also view important info.
@@ -156,7 +158,6 @@ public class Ext2File extends DataBlock {
         // Obtain individual directory names from filePathString
         curDirString = "";
         String fileString = getFileString();
-        int beginCount = 0;
         int slashCount = 0;
 
         // Iterate over the fileString to obtain individual directory names
@@ -168,7 +169,6 @@ public class Ext2File extends DataBlock {
             // Break if a forward slash is met
             if (fileString.charAt(charCount) == '/') {
                 slashCount++;
-                beginCount++;
                 if (slashCount == 2)
                     break;
             }
@@ -178,7 +178,6 @@ public class Ext2File extends DataBlock {
                 curDirString += fileString.charAt(charCount);
 
             charCount++;
-            beginCount++;
         }
         this.fileName = curDirString;
         return curDirString;

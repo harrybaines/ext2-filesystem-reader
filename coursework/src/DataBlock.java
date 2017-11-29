@@ -3,32 +3,33 @@ package coursework;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+/**
+ * Name: DataBlock
+ *
+ * This class represents any data block which contains a sequence of bytes in the volume the user opened.
+ * This class contains various methods which operate on arrays of bytes specified by the user (e.g. opening a file).
+ * MORE
+ *
+ * @author Harry Baines
+ */
 public class DataBlock {
-	
-    private Volume vol;                 // Volume reference which this file is part of
-    private ByteBuffer byteBuffer;
+    
+    private Volume vol;                 /* Volume reference which this file is part of */
+    private ByteBuffer byteBuffer;      /* Buffer containing bytes for this data block */
 
-    // magic line - (int) fileInBytes[i] & 0xFF;
+    /** 
+     * Constructor to initialise a data block represented inside a given volume.
+     * @param vol The passed volume instance.
+     */
+    public DataBlock(Volume vol) {
+        this.vol = vol;
 
-	public DataBlock(Volume vol) {
-
-		this.vol = vol;
-
-		// Wrap existing byte array to byte buffer
+        // Wrap existing volume byte array to byte buffer
         byteBuffer = ByteBuffer.wrap(vol.getFileInBytes());
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-	}
+    }
 
-	public void setByteBuffer(byte[] byteArray) {
-		this.byteBuffer = ByteBuffer.wrap(byteArray);
-		byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-	}
-
-	public Volume getVolume() {
-		return this.vol;
-	}
-
-	/**
+    /**
      * Reads at most length bytes starting at byte offset startByte from start of
      * file. Byte 0 is first byte in the file.
      *
@@ -69,11 +70,7 @@ public class DataBlock {
         return tableIndex;
     }
 
-	public ByteBuffer getByteBuffer() {
-		return this.byteBuffer;
-	}
-
-	/**
+    /**
      * Method to obtain an unsigned integer from a signed 2s complement integer (byte) from the byte buffer.
      * @return Unsigned integer value.
      */
@@ -121,12 +118,19 @@ public class DataBlock {
     //     return (b.getInt(i) & 0xFFFFFFFF);
     // }
 
-
     /**
-     * Method to obtain the size of the filesystem in bytes.
-     * @return Filesystem size in bytes.
+     * Returns the byte buffer which stores bytes in this data block.
+     * @return The byte buffer of data block bytes.
      */
-    public int fileSystemSize() {
-        return this.vol.getFileInBytes().length;
+    public ByteBuffer getByteBuffer() {
+        return this.byteBuffer;
+    }
+
+    /** 
+     * Returns the volume that this data block is located in.
+     * @return The volume instance.
+     */
+    public Volume getVolume() {
+        return this.vol;
     }
 }
