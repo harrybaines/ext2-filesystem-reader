@@ -19,8 +19,8 @@ import java.nio.ByteOrder;
 public class Ext2File extends DataBlock {
 
     private String filePathString;      /* The full file path string to this file */
-    private String fileName;            /* File name string for this ext2 file */
     private Directory dir;              /* Stores a reference to the directory this file is stored in */
+    private long position;              /* Reference to the current position in the file (for reading) */
 
     private ByteBuffer dirDataBuffer;   /* Buffer to store all bytes relevant to the current directory */
     private SuperBlock superBlock;      /* Stores a reference to the super block for file system information */
@@ -42,6 +42,7 @@ public class Ext2File extends DataBlock {
     public Ext2File(Volume vol, String filePathString) {
         super(vol);
         this.filePathString = filePathString;
+        this.position = 0L;
 
         charCount = 0;
         fileInfoList = new ArrayList<String>();
@@ -49,6 +50,132 @@ public class Ext2File extends DataBlock {
 
         // Open this new file
         this.openFile();
+    }
+
+    /********            /******** 
+        ***** API METHODS *****
+    /********             ********/
+
+    /**
+     * Method to read the file the user specified in the file string.
+     * The method will read bytes from startByte up to the length they provide.
+     * An array of bytes will be returned containing all bytes in the file.
+     *
+     * @param startByte The byte to start reading from in the file.
+     * @param length The length of the file the user wishes to read in bytes.
+     * @return An array of bytes relevant to the file opened.
+     */
+    public byte[] read(long startByte, long length) {
+
+        byte[] byteArray = new byte[(int)length];
+        ByteBuffer dataBytesBuffer = ByteBuffer.wrap(byteArray);
+
+        if (iNodeForFileToOpen != null) {
+
+            if (startByte < 0 || startByte >= iNodeForFileToOpen.getTotalFileSize())
+                throw new NullPointerException();
+
+            // Find and read all datablocks for the file, if found successfully
+            int iNodeNumber = iNodeForFileToOpen.getINodeNumber();
+            int tablePointerIndex = getTablePointerForiNode(iNodeNumber, this.getVolume().getSuperblock().getiNodesPerGroup(), this.getVolume().getSuperblock().getTotaliNodes());
+            INode iNode = new INode(iNodeNumber, this.getVolume().getSuperblock().getiNodeTablePointers()[tablePointerIndex], tablePointerIndex, superBlock);
+
+            byte[] dataBlocksFromPointers = iNodeForFileToOpen.getDataBlocksFromPointers();
+            ByteBuffer dataBlocksBuffer = ByteBuffer.wrap(dataBlocksFromPointers);
+
+            for (int i = (int)startByte; i < byteArray.length; i++) {
+                if (i >= dataBlocksBuffer.limit())
+                    break;
+                dataBytesBuffer.put(dataBlocksBuffer.get(i));
+                this.position++;
+            }
+        }
+        else {
+            System.out.println("\n----------\n" + this.filePathString + " - couldn't read this file.\n----------\n");
+            byteArray = new byte[0];
+        }
+
+        return dataBytesBuffer.array();
+    }
+
+    /**
+     * Method to read the file the user specified in the file string.
+     * This method is the same as the other read method in the API, however only requires a length to read.
+     * This method therefore calls the corresponding read method at the current position in the file.
+     *
+     * @param length The length of the file the user wishes to read in bytes.
+     * @return An array of bytes relevant to the file opened.
+     */
+    public byte[] read(long length) {
+        return (this.read(this.position, length));
+    }
+
+    /**
+     * Method to allow the user to change the position in the file (for reading). 
+     * @param position The position in the file the user wishes to move to.
+     */
+    public void seek(long position) {
+        this.position = position;
+    }
+
+    /**
+     * Method to read the file the user specified in the file string.
+     * The method will read bytes from startByte up to the length they provide.
+     * An array of bytes will be returned containing all bytes in the file.
+     *
+     * @param startByte The byte to start reading from in the file.
+     * @param length The length of the file the user wishes to read in bytes.
+     * @return An array of bytes relevant to the file opened.
+     */
+    public long getPosition() {
+        return this.position;
+    }
+
+    /**
+     * Returns the size of this ext2 file in bytes.
+     * @return The file size.
+     */
+    public long getSize() {
+        return (this.iNodeForFileToOpen != null ? this.iNodeForFileToOpen.getTotalFileSize() : 0);
+    }
+
+    public void printDirectoryInfo() {
+        
+        System.out.println("------------------------------------------------------------");
+        System.out.println("\033[1mDirectory Listing for " + this.filePathString + ": \033[0m\n");
+
+        // Print out directory contents of a directory
+        if (iNodeForFileToOpen != null && iNodeForFileToOpen.getFileModeAsString().charAt(0) == 'd') {
+            for (String row : fileInfoList)
+                System.out.println(row);
+        }
+        // If not a directory, print contents of directory the file exists in
+        else {
+            Directory fileDir = new Directory(this);
+            for (String row : fileDir.getFileInfo())
+                System.out.println(row);
+        }
+        System.out.println("------------------------------------------------------------");
+    }
+
+     /**
+     * Simple method to print the contents of a file in ASCII format.
+     * A string is returned containing the full file contents.
+     *
+     * @param bytes The array of bytes containing file info to be printed.
+     * @param fileName The name of the file to print.
+     * @return The string of characters in the file.
+     */
+    public void printFileContents(byte[] bytes) {
+
+        String fileContentsString = "";
+        System.out.println("LENGTHY LENGTH: " + bytes.length);
+        if (bytes.length == 0)
+            fileContentsString += "\n----------\nNo file contents for " + this.filePathString + "\n----------\n";
+        else
+            fileContentsString += "----------\n\033[1mFile Contents for '" + filePathString + "':\033[0m\n----------\n" + new String(bytes) + "----------";
+
+        System.out.println(fileContentsString + "\n"); 
     }
 
     /** 
@@ -80,31 +207,10 @@ public class Ext2File extends DataBlock {
                 dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
                 dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
             }
-            // INode exists and points to a file
+            // INode exists and points to a file - store the iNode for this file for later reference
             else if (nextINode != null)
                 iNodeForFileToOpen = nextINode;
-
-            this.fileName = curDirString;
         }   
-    }
-
-    public void printDirectoryInfo() {
-        
-        System.out.println("\n------------------------------------------------------------");
-        System.out.println("Directory Listing for " + getFileString() + ":\n");
-
-        // Print out directory contents of a directory
-        if (iNodeForFileToOpen != null && iNodeForFileToOpen.getFileModeAsString().charAt(0) == 'd') {
-            for (String row : fileInfoList)
-                System.out.println(row);
-        }
-        // If not a directory, print contents of directory the file exists in
-        else {
-            Directory fileDir = new Directory(this);
-            for (String row : fileDir.getFileInfo())
-                System.out.println(row);
-        }
-        System.out.println("------------------------------------------------------------\n");
     }
 
     /** 
@@ -120,69 +226,6 @@ public class Ext2File extends DataBlock {
         return iNode.getDataBlocksFromPointers();
     }
 
-    /** ISSSUE
-     * Simple method to print the contents of a file in ASCII format.
-     * A string is returned containing the full file contents.
-     *
-     * @param bytes The array of bytes containing file info to be printed.
-     * @param fileName The name of the file to print.
-     * @return The string of characters in the file.
-     */
-    public void printFileContents(byte[] bytes) {
-
-        System.out.println("LENGTH: " + bytes.length); // ISSUE
-
-        String fileContentsString = "";
-        if (bytes.length == 0)
-            fileContentsString += "\n----------\nNo file contents for " + this.filePathString + "\n----------\n";
-        else
-            fileContentsString += "\n----------\nFile Contents for '" + filePathString + "':\n----------\n" + new String(bytes) + "----------\n";
-
-        System.out.println(fileContentsString + "\n"); 
-    }
-
-    /**
-     * Method to read the file the user specified in the file string.
-     * The method will read bytes from startByte up to the length they provide.
-     * An array of bytes will be returned containing all bytes in the file.
-     *
-     * @param startByte The byte to start reading from in the file.
-     * @param length The length of the file the user wishes to read in bytes.
-     * @return An array of bytes relevant to the file opened.
-     */
-    public byte[] readFile(long startByte, long length) {
-
-        if (length < 0 || startByte < 0)
-            return new byte[0];
-
-        byte[] byteArray = new byte[(int)length];
-        ByteBuffer dataBytesBuffer = ByteBuffer.wrap(byteArray);
-
-        if (iNodeForFileToOpen != null) {
-
-            // Find and read all datablocks for the file, if found successfully
-            int iNodeNumber = iNodeForFileToOpen.getINodeNumber();
-            int tablePointerIndex = getTablePointerForiNode(iNodeNumber, this.getVolume().getSuperblock().getiNodesPerGroup(), this.getVolume().getSuperblock().getTotaliNodes());
-            INode iNode = new INode(iNodeNumber, this.getVolume().getSuperblock().getiNodeTablePointers()[tablePointerIndex], tablePointerIndex, superBlock);
-
-            byte[] dataBlocksFromPointers = iNodeForFileToOpen.getDataBlocksFromPointers();
-            ByteBuffer dataBlocksBuffer = ByteBuffer.wrap(dataBlocksFromPointers);
-
-            for (int i = (int)startByte; i < byteArray.length; i++) {
-                if (i >= dataBlocksBuffer.limit())
-                    break;
-                dataBytesBuffer.put(dataBlocksBuffer.get(i));
-            }
-
-        }
-        else {
-            System.out.println("\n----------\n" + this.filePathString + " not a file - may be a directory.\n----------");
-            byteArray = new byte[0];
-        }
-
-        return dataBytesBuffer.array();
-    }
-
     /**
      * Method to obtain the current directory name under consideration as a string.
      * @return The current directory name as a string.
@@ -191,45 +234,26 @@ public class Ext2File extends DataBlock {
 
         // Obtain individual directory names from filePathString
         curDirString = "";
-        String fileString = getFileString();
         int slashCount = 0;
 
         // Iterate over the fileString to obtain individual directory names
         while (true) {
 
-            if (charCount >= fileString.length()) 
+            if (charCount >= this.filePathString.length()) 
                 break;
 
             // Break if a forward slash is met
-            if (fileString.charAt(charCount) == '/') {
-                slashCount++;
-                if (slashCount == 2)
+            if (this.filePathString.charAt(charCount) == '/')
+                if (++slashCount == 2)
                     break;
-            }
 
             // Append character to current directory name string
-            if (fileString.charAt(charCount) != '/')
-                curDirString += fileString.charAt(charCount);
+            if (this.filePathString.charAt(charCount) != '/')
+                curDirString += this.filePathString.charAt(charCount);
 
             charCount++;
         }
         return curDirString;
-    }
-
-    /**
-     * Returns the size of this ext2 file in bytes.
-     * @return The file size.
-     */
-    public long size() {
-        return (this.iNodeForFileToOpen != null ? this.iNodeForFileToOpen.getTotalFileSize() : 0);
-    }
-
-    /**
-     * Returns the name of this ext2 file as a string.
-     * @return The name of this file.
-     */
-    public String getFileName() {
-        return this.fileName;
     }
 
     /**
@@ -238,14 +262,6 @@ public class Ext2File extends DataBlock {
      */
     public ByteBuffer getDirDataBuffer() {
         return this.dirDataBuffer;
-    }
-
-    /**
-     * Obtains the filename string the user passed in and wishes to open.
-     * @return Filename string.
-     */
-    public String getFileString() {
-        return this.filePathString;
     }
 
     /**

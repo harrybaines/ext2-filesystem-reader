@@ -25,7 +25,7 @@ public abstract class Helper {
         int count = 0;
         int byteCount = 0;
 
-        System.out.println("\n----------\nByte Count: " + bytes.length);
+        System.out.println("\n----------\n\033[1mByte Count: " + bytes.length + "\033[0m");
         System.out.println("----------");
         
         while (count < bytes.length) {
@@ -83,7 +83,7 @@ public abstract class Helper {
      */
     public static void printSuperblockInfo(SuperBlock superBlock) {
         System.out.println("\n--------------------");
-        System.out.println("Superblock Information:");
+        System.out.println("\033[1mSuperblock Information:\033[0m");
         System.out.println("--------------------");
         System.out.println("Total number of inodes:      "  + superBlock.getTotaliNodes());
         System.out.println("Total number of blocks:      "  + superBlock.getTotalBlocks());
@@ -94,7 +94,7 @@ public abstract class Helper {
         System.out.println("Size of each inode (bytes):  "  + superBlock.getiNodeSize());
         System.out.println("Volume label (disk name):    '" + superBlock.getVolumeLbl() + "'");
         System.out.println("--------------------");
-        System.out.println("Further Information:");
+        System.out.println("\033[1mFurther Information:\033[0m");
         System.out.println("----------");
         System.out.println("iNode table size (blocks):   " + superBlock.getiNodeTableSize());
         System.out.println("iNode table size (bytes):    " + superBlock.getiNodeTableSize() * superBlock.getBlockSize());

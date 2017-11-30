@@ -26,7 +26,7 @@ public class SuperBlock extends DataBlock {
     public void getSuperblockBytes() {
 
         // Obtain superblock bytes
-        byte[] block = this.read(1 * this.getBlockSize(), this.getBlockSize());
+        byte[] block = this.readBlock(1 * this.getBlockSize(), this.getBlockSize());
         ByteBuffer byteBlockBuffer = ByteBuffer.wrap(block);
         byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
@@ -72,7 +72,7 @@ public class SuperBlock extends DataBlock {
         int[] iNodeTablePointers = new int[numBlockGroups];
 
         // Finds the group descriptors using block group 0 (1024 bytes after superblock)
-        byte[] groupDescBytes = this.read(2 * this.getBlockSize(), numBlockGroups * GroupDescriptor.GROUP_DESCRIPTOR_SIZE);
+        byte[] groupDescBytes = this.readBlock(2 * this.getBlockSize(), numBlockGroups * GroupDescriptor.GROUP_DESCRIPTOR_SIZE);
         ByteBuffer groupDescBuffer = ByteBuffer.wrap(groupDescBytes);
         groupDescBuffer.order(ByteOrder.LITTLE_ENDIAN);
 

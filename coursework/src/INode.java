@@ -35,7 +35,7 @@ public class INode extends DataBlock {
 
         iNodeOffset = (iNodeTblPointer * superBlock.getBlockSize()) + (((iNodeNumber-1) - (groupNum * superBlock.getiNodesPerGroup())) * superBlock.getiNodeSize());
 
-        iNodeBytes = this.read(iNodeOffset, superBlock.getiNodeSize());
+        iNodeBytes = this.readBlock(iNodeOffset, superBlock.getiNodeSize());
 
         // Wrap in buffer for later reading
         iNodeBuffer = ByteBuffer.wrap(iNodeBytes);
@@ -91,7 +91,7 @@ public class INode extends DataBlock {
             // Obtains initial list of indirect pointers to begin indirection traversal
             List<Integer> indirectTableBlockPointers = this.getIndirectBlockPointers(doubleIndirectPointer);
             
-            // Obtains all non-0 pointers from 3 levels of indirection
+            // Obtains all non-0 pointers from 3 levels of indirection 
             List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(2, indirectTableBlockPointers);
 
             // Transfer all found data from indirect pointers into 'master' list
@@ -125,45 +125,38 @@ public class INode extends DataBlock {
 
     public List<Integer> getPointersByIndirectionLevel(int indirectionLevel, List<Integer> indirectTableBlockPointers) {
 
-        int nextBlockPointer = 0;
-
         // Stores all pointers found that aren't 0
         List<Integer> blockPointers = new ArrayList<Integer>();
 
         // Iterate over first block of pointers
         for (int i : indirectTableBlockPointers) {
             
+            // Get all pointers in the block it points to (get level 2)
             if (i != 0) {
-                // Get all pointers in the block it points to (get level 2)
                 List<Integer> level2Pointers = this.getIndirectBlockPointers(i);
                 
-                // Iterate over 2nd block of pointers (level 2)
+                // Iterate over 2nd block of pointers (level 2) and get all pointers in the block it points to
                 if (indirectionLevel >= 2) {
                     for (int j : level2Pointers) {
-
-                        // Get all pointers in the block it points to (get level 3)
                         if (j != 0) {
-
                             // Add data to array if at level 2, otherwise ignore
                             if (indirectionLevel == 2)
                                 blockPointers.add(j);
 
-                            List<Integer> level3Pointers = this.getIndirectBlockPointers(j);
+                            // Get level 3 block pointers
+                            else {
+                                List<Integer> level3Pointers = this.getIndirectBlockPointers(j);
                             
-                            // Iterate over final block of pointers (level 3)
-                            if (indirectionLevel == 3) {
-                                for (int k : level3Pointers)
-                                    if (k != 0)
-                                        blockPointers.add(k);
-                            }    
-                            else
-                                break; 
+                                // Iterate over final block of pointers (level 3)
+                                if (indirectionLevel == 3)
+                                    for (int k : level3Pointers)
+                                        if (k != 0)
+                                            blockPointers.add(k);
+                            }
                         }
                     }
-                }
-                else
-                    break;
-            }
+                }           
+            }   
         }
         return blockPointers;
     }
@@ -176,12 +169,9 @@ public class INode extends DataBlock {
 
         for (int i : pointers) {
             if (i != 0) {
-                byte[] dataBlocksArray = this.read(i * superBlock.getBlockSize(), superBlock.getBlockSize());
+                byte[] dataBlocksArray = this.readBlock(i * superBlock.getBlockSize(), superBlock.getBlockSize());
                 for (int curBlock = 0; curBlock < dataBlocksArray.length; curBlock++) {
-                    System.out.println(dataBlocksArray[curBlock]);
-                    //if (dataBlocksArray[curBlock] != 0) {
-                        byteList.add(dataBlocksArray[curBlock]);
-                   // }
+                    byteList.add(dataBlocksArray[curBlock]);
                 }
             }
         }
@@ -313,7 +303,7 @@ public class INode extends DataBlock {
     public List<Integer> getIndirectBlockPointers(int blockNum) {
 
         int count = 0;
-        byte[] indirectTableBytes = this.read(blockNum*superBlock.getBlockSize(), superBlock.getBlockSize());
+        byte[] indirectTableBytes = this.readBlock(blockNum*superBlock.getBlockSize(), superBlock.getBlockSize());
         ByteBuffer indirectBuffer = ByteBuffer.wrap(indirectTableBytes);
         indirectBuffer.order(ByteOrder.LITTLE_ENDIAN);
 

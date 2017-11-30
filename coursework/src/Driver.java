@@ -7,6 +7,7 @@ package coursework;
  * In this example, the user opens many files located within the ext2 filesystem.
  * The user can open these files and view their contents if they are regular files.
  * Also, the user can view a directory listing for a file or a directory they choose.
+ * Usage: can use: /xxx to find a file from the root, or can use: /root/xxx where xxx is a file.
  *
  * @author Harry Baines
  */
@@ -23,54 +24,79 @@ public class Driver {
         Volume vol = new Volume("ext2fs");
         Helper.printSuperblockInfo(vol.getSuperblock());
         
-        // Create new file instances
+        /* CREATE NEW FILE INSTANCES */
+        // 1. Create new file
+        // 2. Print directory information
+        // 3. Read file contents
+        // 4. Display file contents
         Ext2File twoCities = new Ext2File(vol, "/two-cities");
-        Ext2File deepDownFile = new Ext2File(vol, "/deep/down/in/the/filesystem/there/lived/a/file");
-        Ext2File dirStart = new Ext2File(vol, "/files");
-        Ext2File dirEnd = new Ext2File(vol, "/files/dir-e");
-        Ext2File indStart = new Ext2File(vol, "/files/ind-s");
-        Ext2File indEnd = new Ext2File(vol, "/files/ind-e");
-        Ext2File doubleStart = new Ext2File(vol, "/files/dbl-ind-s");
-        Ext2File doubleEnd = new Ext2File(vol, "/files/dbl-ind-e");
-        Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
-        Ext2File tripleEnd = new Ext2File(vol, "/files/trpl-ind-e");
-        Ext2File lostFound = new Ext2File(vol, "/lost+found");
-        Ext2File bigDir = new Ext2File(vol, "/big-dir");
-
-        // Prints the directory information relevant to a given file
         twoCities.printDirectoryInfo();
-        deepDownFile.printDirectoryInfo();
-        dirStart.printDirectoryInfo();
-        lostFound.printDirectoryInfo();
-        //bigDir.printDirectoryInfo();
-
-        // Reads an array of bytes relevant to chosen file
-        byte twoCitiesBuf[] = twoCities.readFile(0L, twoCities.size());
-        byte deepDownBuf[] = deepDownFile.readFile(0L, deepDownFile.size());
-        Helper.dumpHexBytes(deepDownBuf);
-
-        byte dirStartBuf[] = dirStart.readFile(0L, dirStart.size());
-        byte dirEndBuf[] = dirEnd.readFile(0L, dirEnd.size());
-        byte indStartBuf[] = indStart.readFile(0L, indStart.size());
-        byte indEndBuf[] = indEnd.readFile(0L, indEnd.size());
-        byte doubleStartBuf[] = doubleStart.readFile(0L, 1000); // SIZE PERFORMANCE ISSUE
-        byte doubleEndBuf[] = doubleEnd.readFile(0L, 1000);
-        byte tripleStartBuf[] = tripleStart.readFile(0L, 1000);
-        byte tripleEndBuf[] = tripleEnd.readFile(0L, 1000);
-
-        // Read file contents using pre-built print method
+        byte twoCitiesBuf[] = twoCities.read(0L, twoCities.getSize());
         twoCities.printFileContents(twoCitiesBuf);
+
+
+        twoCities.seek(20);
+        twoCities.printFileContents(twoCitiesBuf);
+
+
+        Ext2File deepDownFile = new Ext2File(vol, "/deep/down/in/the/filesystem/there/lived/a/file");
+        deepDownFile.printDirectoryInfo();
+        byte deepDownBuf[] = deepDownFile.read(0L, deepDownFile.getSize());
+        Helper.dumpHexBytes(deepDownBuf);
         deepDownFile.printFileContents(deepDownBuf);
+
+
+        Ext2File dirStart = new Ext2File(vol, "/files/dir-s");
+        dirStart.printDirectoryInfo();
+        byte dirStartBuf[] = dirStart.read(0L, dirStart.getSize());
         dirStart.printFileContents(dirStartBuf);
+
+
+        Ext2File dirEnd = new Ext2File(vol, "/files/dir-e");
+        byte dirEndBuf[] = dirEnd.read(0L, dirEnd.getSize());
         dirEnd.printFileContents(dirEndBuf);
+
+
+        Ext2File indStart = new Ext2File(vol, "/files/ind-s");
+        byte indStartBuf[] = indStart.read(0L, indStart.getSize());
         indStart.printFileContents(indStartBuf);
+
+
+        Ext2File indEnd = new Ext2File(vol, "/files/ind-e");
+        byte indEndBuf[] = indEnd.read(0L, indEnd.getSize());
         indEnd.printFileContents(indEndBuf);
+
+
+        Ext2File doubleStart = new Ext2File(vol, "/files/dbl-ind-s");
+        byte doubleStartBuf[] = doubleStart.read(0L, 1000);
         doubleStart.printFileContents(doubleStartBuf);
+
+
+        Ext2File doubleEnd = new Ext2File(vol, "/files/dbl-ind-e");
+        byte doubleEndBuf[] = doubleEnd.read(0L, 1000);
         doubleEnd.printFileContents(doubleEndBuf);
+
+
+        Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
+        byte tripleStartBuf[] = tripleStart.read(0L, 1000);
         tripleStart.printFileContents(tripleStartBuf);
+
+
+        Ext2File tripleEnd = new Ext2File(vol, "/files/trpl-ind-e");
+        byte tripleEndBuf[] = tripleEnd.read(0L, 1000);
         tripleEnd.printFileContents(tripleEndBuf);
 
-        System.out.println("Time to open all files: " + (System.currentTimeMillis() - startTime) + "ms");
+
+        Ext2File lostFound = new Ext2File(vol, "/lost+found");
+        lostFound.printDirectoryInfo();
+        byte lostFoundBuf[] = lostFound.read(0L, 1000);
+        lostFound.printFileContents(lostFoundBuf);
+
+        Ext2File bigDir = new Ext2File(vol, "/big-dir");
+        //bigDir.printDirectoryInfo();
+
+
+        System.out.println("\033[1mTime to open all files: " + (System.currentTimeMillis() - startTime) + "ms\033[0m\n");
     }
 
     /**

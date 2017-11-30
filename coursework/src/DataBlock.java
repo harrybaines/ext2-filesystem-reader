@@ -37,7 +37,7 @@ public class DataBlock {
      * @param length The total number of bytes to read.
      * @return The array of bytes from the file.
      */
-    public byte[] read(long startByte, long length) {
+    public byte[] readBlock(long startByte, long length) {
 
         byte[] specifiedBytes = new byte[(int) length];
 
