@@ -80,8 +80,9 @@ public class INode extends DataBlock {
             List<Integer> indirectTableBlockPointers = this.getIndirectBlockPointers(indirectPointer);
 
             // Transfer all found data from indirect pointers into 'master' list
-            for (byte b : this.getDataBlocks(indirectTableBlockPointers))
+            for (byte b : this.getDataBlocks(indirectTableBlockPointers)) {
                 allDataBlocks.add(b);
+            }
         }
 
         // Level 2 of indirection - DOUBLE INDIRECT
@@ -94,8 +95,9 @@ public class INode extends DataBlock {
             List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(2, indirectTableBlockPointers);
 
             // Transfer all found data from indirect pointers into 'master' list
-            for (byte b : this.getDataBlocks(pointersFromIndirectionLevel))
+            for (byte b : this.getDataBlocks(pointersFromIndirectionLevel)) {
                 allDataBlocks.add(b);
+            }
         }
 
         // Level 3 of indirection - TRIPLE INDIRECT
@@ -108,8 +110,9 @@ public class INode extends DataBlock {
             List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(3, indirectTableBlockPointers);
 
             // Transfer all found data from indirect pointers into 'master' list
-            for (byte b : this.getDataBlocks(pointersFromIndirectionLevel))
+            for (byte b : this.getDataBlocks(pointersFromIndirectionLevel)) {
                 allDataBlocks.add(b);
+            }
         }
 
         // Transfer dynamic array list into array to return
@@ -174,8 +177,12 @@ public class INode extends DataBlock {
         for (int i : pointers) {
             if (i != 0) {
                 byte[] dataBlocksArray = this.read(i * superBlock.getBlockSize(), superBlock.getBlockSize());
-                for (int curBlock = 0; curBlock < dataBlocksArray.length; curBlock++)
-                    byteList.add(dataBlocksArray[curBlock]);
+                for (int curBlock = 0; curBlock < dataBlocksArray.length; curBlock++) {
+                    System.out.println(dataBlocksArray[curBlock]);
+                    //if (dataBlocksArray[curBlock] != 0) {
+                        byteList.add(dataBlocksArray[curBlock]);
+                   // }
+                }
             }
         }
         return byteList;

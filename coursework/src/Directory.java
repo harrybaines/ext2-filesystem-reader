@@ -107,6 +107,7 @@ public class Directory extends DataBlock {
         int iNodeNumber = this.getIntFromBytes(offset, dirDataBuffer);
 
         int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
+        System.out.println("INDEX: " + tablePointerIndex);
 
         return (new INode(iNodeNumber, superBlock.getiNodeTablePointers()[tablePointerIndex], tablePointerIndex, superBlock));
     }

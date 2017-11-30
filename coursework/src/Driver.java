@@ -53,10 +53,10 @@ public class Driver {
         byte dirEndBuf[] = dirEnd.readFile(0L, dirEnd.size());
         byte indStartBuf[] = indStart.readFile(0L, indStart.size());
         byte indEndBuf[] = indEnd.readFile(0L, indEnd.size());
-        byte doubleStartBuf[] = doubleStart.readFile(0L, doubleStart.size());
-        byte doubleEndBuf[] = doubleEnd.readFile(0L, doubleEnd.size());
-        byte tripleStartBuf[] = tripleStart.readFile(0L, tripleStart.size());
-        byte tripleEndBuf[] = tripleEnd.readFile(0L, tripleEnd.size());
+        byte doubleStartBuf[] = doubleStart.readFile(0L, 1000); // SIZE PERFORMANCE ISSUE
+        byte doubleEndBuf[] = doubleEnd.readFile(0L, 1000);
+        byte tripleStartBuf[] = tripleStart.readFile(0L, 1000);
+        byte tripleEndBuf[] = tripleEnd.readFile(0L, 1000);
 
         // Read file contents using pre-built print method
         twoCities.printFileContents(twoCitiesBuf);
@@ -67,8 +67,8 @@ public class Driver {
         indEnd.printFileContents(indEndBuf);
         doubleStart.printFileContents(doubleStartBuf);
         doubleEnd.printFileContents(doubleEndBuf);
-        // tripleStart.printFileContents(tripleStartBuf);
-        // tripleEnd.printFileContents(tripleEndBuf);
+        tripleStart.printFileContents(tripleStartBuf);
+        tripleEnd.printFileContents(tripleEndBuf);
 
         System.out.println("Time to open all files: " + (System.currentTimeMillis() - startTime) + "ms");
     }

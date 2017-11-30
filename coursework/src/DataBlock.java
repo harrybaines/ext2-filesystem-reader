@@ -39,7 +39,7 @@ public class DataBlock {
      */
     public byte[] read(long startByte, long length) {
 
-        byte[] specifiedBytes = new byte[(int) length]; //SLOW?
+        byte[] specifiedBytes = new byte[(int) length];
 
         for (int curByte = 0; curByte < length; curByte++) {
 

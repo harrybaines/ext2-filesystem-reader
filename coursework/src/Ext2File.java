@@ -57,7 +57,7 @@ public class Ext2File extends DataBlock {
      *
      * @return True if the file was successfully opened, false otherwise.
      */
-    public void openFile() {
+    private void openFile() {
 
         // Get directory bytes pointed to by iNode 2 direct pointer
         byte[] rootDataBlocks = getDirBytes(2);
@@ -112,7 +112,7 @@ public class Ext2File extends DataBlock {
      * @param iNodeNumber The iNode number which references the directory.
      * @return The array of bytes in the current directory.
      */
-    public byte[] getDirBytes(int iNodeNumber) {
+    private byte[] getDirBytes(int iNodeNumber) {
 
         // Obtains all bytes relevant to a given
         int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
@@ -187,7 +187,7 @@ public class Ext2File extends DataBlock {
      * Method to obtain the current directory name under consideration as a string.
      * @return The current directory name as a string.
      */
-    public String getCurDirectoryString() {
+    private String getCurDirectoryString() {
 
         // Obtain individual directory names from filePathString
         curDirString = "";
@@ -213,7 +213,6 @@ public class Ext2File extends DataBlock {
 
             charCount++;
         }
-        this.fileName = curDirString;
         return curDirString;
     }
 
@@ -222,10 +221,7 @@ public class Ext2File extends DataBlock {
      * @return The file size.
      */
     public long size() {
-        if (this.iNodeForFileToOpen != null)
-            return this.iNodeForFileToOpen.getTotalFileSize();
-        else
-            return 0;
+        return (this.iNodeForFileToOpen != null ? this.iNodeForFileToOpen.getTotalFileSize() : 0);
     }
 
     /**
