@@ -73,7 +73,7 @@ public abstract class Helper {
             System.out.print(asciiString);
         }
 
-        System.out.println("----------");
+        System.out.println("----------\n");
     }
 
     /** 

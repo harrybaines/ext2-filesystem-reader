@@ -24,7 +24,7 @@ public class Ext2File extends DataBlock {
 
     private ByteBuffer dirDataBuffer;   /* Buffer to store all bytes relevant to the current directory */
     private SuperBlock superBlock;      /* Stores a reference to the super block for file system information */
-    private List<String> fileInfoList;
+    private List<String> fileInfoList;  /* Dynamic array of strings to store each 'row' in a directory listing */
 
     private String curDirString;        /* Stores the name of the current directory under consideration */
     private int charCount;              /* Used to split the current directory string into parts */
@@ -52,7 +52,7 @@ public class Ext2File extends DataBlock {
         this.openFile();
     }
 
-    /********            /******** 
+    /********             /******** 
         ***** API METHODS *****
     /********             ********/
 
@@ -65,21 +65,19 @@ public class Ext2File extends DataBlock {
      * @param length The length of the file the user wishes to read in bytes.
      * @return An array of bytes relevant to the file opened.
      */
-    public byte[] read(long startByte, long length) {
+    public byte[] read(long startByte, long length) throws NullPointerException {
 
         byte[] byteArray = new byte[(int)length];
         ByteBuffer dataBytesBuffer = ByteBuffer.wrap(byteArray);
 
         if (iNodeForFileToOpen != null) {
 
-            if (startByte < 0 || startByte >= iNodeForFileToOpen.getTotalFileSize())
+            if (startByte < 0 || startByte >= iNodeForFileToOpen.getTotalFileSize()) {
+                System.out.println("----------\nCouldn't read data at that position! \n----------");
                 throw new NullPointerException();
+            }
 
             // Find and read all datablocks for the file, if found successfully
-            int iNodeNumber = iNodeForFileToOpen.getINodeNumber();
-            int tablePointerIndex = getTablePointerForiNode(iNodeNumber, this.getVolume().getSuperblock().getiNodesPerGroup(), this.getVolume().getSuperblock().getTotaliNodes());
-            INode iNode = new INode(iNodeNumber, this.getVolume().getSuperblock().getiNodeTablePointers()[tablePointerIndex], tablePointerIndex, superBlock);
-
             byte[] dataBlocksFromPointers = iNodeForFileToOpen.getDataBlocksFromPointers();
             ByteBuffer dataBlocksBuffer = ByteBuffer.wrap(dataBlocksFromPointers);
 
@@ -90,10 +88,8 @@ public class Ext2File extends DataBlock {
                 this.position++;
             }
         }
-        else {
-            System.out.println("\n----------\n" + this.filePathString + " - couldn't read this file.\n----------\n");
-            byteArray = new byte[0];
-        }
+        else
+            System.out.println(this.filePathString + " - couldn't read this file.");
 
         return dataBytesBuffer.array();
     }
@@ -119,13 +115,11 @@ public class Ext2File extends DataBlock {
     }
 
     /**
-     * Method to read the file the user specified in the file string.
-     * The method will read bytes from startByte up to the length they provide.
-     * An array of bytes will be returned containing all bytes in the file.
+     * Method to return the current position in the file (i.e. byte offset from the start of the file).
+     * The position will be 0 when the file is first opened and will advance by the number of bytes read
+     * with every call to one of the read methods.
      *
-     * @param startByte The byte to start reading from in the file.
-     * @param length The length of the file the user wishes to read in bytes.
-     * @return An array of bytes relevant to the file opened.
+     * @return The current position in the file.
      */
     public long getPosition() {
         return this.position;
@@ -138,6 +132,10 @@ public class Ext2File extends DataBlock {
     public long getSize() {
         return (this.iNodeForFileToOpen != null ? this.iNodeForFileToOpen.getTotalFileSize() : 0);
     }
+
+    /********                 /******** 
+        ***** FURTHER METHODS *****
+    /********                 ********/
 
     public void printDirectoryInfo() {
         
@@ -168,11 +166,11 @@ public class Ext2File extends DataBlock {
      */
     public void printFileContents(byte[] bytes) {
 
+        System.out.println(filePathString + " is " + ((isDirectory == true) ? "a directory." : "a file."));
         String fileContentsString = "";
-        System.out.println("LENGTHY LENGTH: " + bytes.length);
         if (bytes.length == 0)
-            fileContentsString += "\n----------\nNo file contents for " + this.filePathString + "\n----------\n";
-        else
+            fileContentsString += "----------\nNo file contents for " + this.filePathString + "\n----------\n";
+        else if (!isDirectory)
             fileContentsString += "----------\n\033[1mFile Contents for '" + filePathString + "':\033[0m\n----------\n" + new String(bytes) + "----------";
 
         System.out.println(fileContentsString + "\n"); 
@@ -206,10 +204,13 @@ public class Ext2File extends DataBlock {
                 rootDataBlocks = getDirBytes(dir.getNextINode().getINodeNumber());
                 dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);
                 dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
+                isDirectory = true;
             }
             // INode exists and points to a file - store the iNode for this file for later reference
-            else if (nextINode != null)
+            else if (nextINode != null) {
                 iNodeForFileToOpen = nextINode;
+                isDirectory = false;
+            }
         }   
     }
 

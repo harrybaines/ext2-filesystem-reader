@@ -29,13 +29,12 @@ public class Driver {
         // 2. Print directory information
         // 3. Read file contents
         // 4. Display file contents
-        Ext2File twoCities = new Ext2File(vol, "/two-cities");
+        Ext2File twoCities = new Ext2File(vol, "/files");
         twoCities.printDirectoryInfo();
+        // twoCities.seek(20);
+        // byte twoCitiesBuf[] = twoCities.read(twoCities.getPosition(), twoCities.getSize());
+
         byte twoCitiesBuf[] = twoCities.read(0L, twoCities.getSize());
-        twoCities.printFileContents(twoCitiesBuf);
-
-
-        twoCities.seek(20);
         twoCities.printFileContents(twoCitiesBuf);
 
 
@@ -68,35 +67,36 @@ public class Driver {
 
 
         Ext2File doubleStart = new Ext2File(vol, "/files/dbl-ind-s");
-        byte doubleStartBuf[] = doubleStart.read(0L, 1000);
+        byte doubleStartBuf[] = doubleStart.read(0L, doubleStart.getSize());
         doubleStart.printFileContents(doubleStartBuf);
 
 
         Ext2File doubleEnd = new Ext2File(vol, "/files/dbl-ind-e");
-        byte doubleEndBuf[] = doubleEnd.read(0L, 1000);
+        byte doubleEndBuf[] = doubleEnd.read(0L, 21);
         doubleEnd.printFileContents(doubleEndBuf);
+        Helper.dumpHexBytes(doubleEndBuf);
 
 
         Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
-        byte tripleStartBuf[] = tripleStart.read(0L, 1000);
+        byte tripleStartBuf[] = tripleStart.read(0L, 23); // issue
         tripleStart.printFileContents(tripleStartBuf);
 
 
         Ext2File tripleEnd = new Ext2File(vol, "/files/trpl-ind-e");
-        byte tripleEndBuf[] = tripleEnd.read(0L, 1000);
+        byte tripleEndBuf[] = tripleEnd.read(0L, 20);
         tripleEnd.printFileContents(tripleEndBuf);
 
 
         Ext2File lostFound = new Ext2File(vol, "/lost+found");
         lostFound.printDirectoryInfo();
-        byte lostFoundBuf[] = lostFound.read(0L, 1000);
+        byte lostFoundBuf[] = lostFound.read(0L, 20);
         lostFound.printFileContents(lostFoundBuf);
 
         Ext2File bigDir = new Ext2File(vol, "/big-dir");
         //bigDir.printDirectoryInfo();
 
 
-        System.out.println("\033[1mTime to open all files: " + (System.currentTimeMillis() - startTime) + "ms\033[0m\n");
+        System.out.println("Time to open all files: " + (System.currentTimeMillis() - startTime) + "ms\n");
     }
 
     /**
