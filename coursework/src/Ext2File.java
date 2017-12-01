@@ -166,6 +166,8 @@ public class Ext2File extends DataBlock {
      */
     public void printFileContents(byte[] bytes) {
 
+        System.out.println("Length: " + bytes.length);
+
         System.out.println(filePathString + " is " + ((isDirectory == true) ? "a directory." : "a file."));
         String fileContentsString = "";
         if (bytes.length == 0)

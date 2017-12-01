@@ -31,9 +31,6 @@ public class SuperBlock extends DataBlock {
         byteBlockBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
         iNodeTablePointers = this.getAllINodeTblPointers();
-        
-        // Obtain hex and ASCII values of bytes in superblock
-        //Helper.dumpHexBytes(block);
     }
 
     /**

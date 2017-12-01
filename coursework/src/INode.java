@@ -123,7 +123,6 @@ public class INode extends DataBlock {
         return byteArray;
     }
 
-    // REMAKE
     public List<Integer> getPointersByIndirectionLevel(int indirectionLevel, List<Integer> indirectTableBlockPointers) {
 
         // Stores all pointers found that aren't 0
@@ -134,6 +133,7 @@ public class INode extends DataBlock {
 
             // Iterate over 2nd block of pointers (level 2) and get all pointers in the block it points to
             if (i != 0) {
+
                 for (int j : this.getIndirectBlockPointers(i)) {
                     if (j != 0) {
                         // Add data to list if at level 2, otherwise ignore - find level 
