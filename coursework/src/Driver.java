@@ -20,16 +20,21 @@ public class Driver {
 
         long startTime = System.currentTimeMillis();
 
+
         // Create new volume instance for 'ext2fs' and print the super block info
         Volume vol = new Volume("ext2fs");
         Helper.printSuperblockInfo(vol.getSuperblock());
-        
+        Ext2Reader e = new Ext2Reader(vol);
+
         /* CREATE NEW FILE INSTANCES */
         // 1. Create new file
         // 2. Print directory information
         // 3. Read file contents
         // 4. Display file contents
-        Ext2File twoCities = new Ext2File(vol, "/files");
+        Ext2File root = new Ext2File(vol, "/root");
+        root.printDirectoryInfo();
+
+        Ext2File twoCities = new Ext2File(vol, "/two-cities");
         twoCities.printDirectoryInfo();
         // twoCities.seek(20);
         // byte twoCitiesBuf[] = twoCities.read(twoCities.getPosition(), twoCities.getSize());
@@ -86,11 +91,6 @@ public class Driver {
         byte tripleEndBuf[] = tripleEnd.read(0L, 20);
         tripleEnd.printFileContents(tripleEndBuf);
 
-
-        Ext2File lostFound = new Ext2File(vol, "/lost+found");
-        lostFound.printDirectoryInfo();
-        byte lostFoundBuf[] = lostFound.read(0L, 20);
-        lostFound.printFileContents(lostFoundBuf);
 
         Ext2File bigDir = new Ext2File(vol, "/big-dir");
         //bigDir.printDirectoryInfo();

@@ -59,7 +59,6 @@ public class Directory extends DataBlock {
 
             // Add length to find next entry 'row'
             currentLength += this.getShortFromBytes(currentLength + 4, dirDataBuffer);
-
         }
         return directoryStrings;
     }
@@ -97,7 +96,7 @@ public class Directory extends DataBlock {
 
         // Unix-style directory listing for a given iNode
         String rowString = currentINode.getFileModeAsString() + "  " + String.format("%2s", Integer.toString(currentINode.getNumHardLinks())) + "  " + users + "  " 
-                            + String.format("%12s", Long.toString(currentINode.getTotalFileSize())) + "  " + currentINode.getLastModifiedTime() + " " + filenameStr; 
+                            + String.format("%12s", Long.toString(currentINode.getTotalFileSize())) + "  " + currentINode.getLastModifiedTime() + " " + filenameStr + "\n"; 
 
         return rowString;
     }

@@ -64,7 +64,6 @@ public class INode extends DataBlock {
 
         int indirectionLevel = 0;
 
-        // SLOW SOMEWHERE
         List<Integer> directPointers = this.getDirectPointers();
         List<Byte> allDataBlocks = this.getDataBlocks(directPointers);
 

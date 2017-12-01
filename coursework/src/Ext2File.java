@@ -143,16 +143,8 @@ public class Ext2File extends DataBlock {
         System.out.println("\033[1mDirectory Listing for " + this.filePathString + ": \033[0m\n");
 
         // Print out directory contents of a directory
-        if (iNodeForFileToOpen != null && iNodeForFileToOpen.getFileModeAsString().charAt(0) == 'd') {
-            for (String row : fileInfoList)
-                System.out.println(row);
-        }
-        // If not a directory, print contents of directory the file exists in
-        else {
-            Directory fileDir = new Directory(this);
-            for (String row : fileDir.getFileInfo())
-                System.out.println(row);
-        }
+        for (String row : this.getFileInfoList())
+            System.out.print(row);
         System.out.println("------------------------------------------------------------");
     }
 
@@ -260,6 +252,14 @@ public class Ext2File extends DataBlock {
     }
 
     /**
+     * Returns true if this file is a directory, false otherwise.
+     * @return True for directory, false for regular file.
+     */
+    public boolean isDirectory() {
+        return this.isDirectory;
+    }
+
+    /**
      * Obtains the byte buffer for the current directory.
      * @return Byte buffer reference.
      */
@@ -273,5 +273,22 @@ public class Ext2File extends DataBlock {
      */
     public String getNextDirectoryString() {
         return this.curDirString;
+    }
+
+    /**
+     * Returns the list of strings for all files names in a given directory.
+     * @return The list of file name strings.
+     */
+    public List<String> getFileInfoList() {
+
+         // Print out directory contents of a directory
+        if (iNodeForFileToOpen != null && iNodeForFileToOpen.getFileModeAsString().charAt(0) == 'd') {
+            return fileInfoList;
+        }
+        // If not a directory, print contents of directory the file exists in
+        else {
+            Directory fileDir = new Directory(this);
+            return fileDir.getFileInfo();
+        }
     }
 }
