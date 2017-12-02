@@ -1,16 +1,26 @@
-package coursework;
+package ext2;
 
 import java.nio.ByteBuffer;
-
 import java.util.List;
 
-public abstract class Helper {
+public class Helper {
 
-    public static void printPointers(List<Integer> pointers) {
+    private String hexBytesString;
+
+    public Helper() {
+        this.hexBytesString = "";
+    }
+
+    public void printPointers(List<Integer> pointers) {
         System.out.println("----------");
         for (int i : pointers)
            System.out.println("pointer: " + i);
         System.out.println("----------\n");
+    }
+
+    public String getHexBytesString(byte[] bytes) {
+        this.dumpHexBytes(bytes, false);
+        return this.hexBytesString;
     }
 
     /**
@@ -20,10 +30,11 @@ public abstract class Helper {
      * 
      * @param bytes The array of bytes to output in hex format.
      */
-    public static void dumpHexBytes(byte[] bytes) {
+    public void dumpHexBytes(byte[] bytes, boolean print) {
                 
         int count = 0;
         int byteCount = 0;
+        this.hexBytesString = "";
 
         System.out.println("\n----------\n\033[1mByte Count: " + bytes.length + "\033[0m");
         System.out.println("----------");
@@ -50,7 +61,8 @@ public abstract class Helper {
                 count++;
             }
             
-            System.out.print(hexString);
+            if (print)
+                System.out.print(hexString);
 
             int asciiCount = 0;
 
@@ -70,10 +82,14 @@ public abstract class Helper {
             }
 
             asciiString += "\n";
-            System.out.print(asciiString);
+            hexBytesString += hexString + asciiString;
+
+            if (print)
+                System.out.print(asciiString);
         }
 
-        System.out.println("----------\n");
+        if (print)
+            System.out.println("----------\n");
     }
 
     /** 
@@ -81,33 +97,25 @@ public abstract class Helper {
      * The superblock holds characteristics of the filesystem.
      * Further information is printed, which is derived from the superblock fields.
      */
-    public static void printSuperblockInfo(SuperBlock superBlock) {
-        System.out.println("\n--------------------");
-        System.out.println("\033[1mSuperblock Information:\033[0m");
-        System.out.println("--------------------");
-        System.out.println("Total number of inodes:      "  + superBlock.getTotaliNodes());
-        System.out.println("Total number of blocks:      "  + superBlock.getTotalBlocks());
-        System.out.println("Block size (bytes):          "  + superBlock.getBlockSize());
-        System.out.println("No. of blocks per group:     "  + superBlock.getBlocksPerGroup());
-        System.out.println("No. of inodes per group:     "  + superBlock.getiNodesPerGroup());
-        System.out.println("Magic number:                "  + superBlock.getMagicNumber());
-        System.out.println("Size of each inode (bytes):  "  + superBlock.getiNodeSize());
-        System.out.println("Volume label (disk name):    '" + superBlock.getVolumeLbl() + "'");
-        System.out.println("--------------------");
-        System.out.println("\033[1mFurther Information:\033[0m");
-        System.out.println("----------");
-        System.out.println("iNode table size (blocks):   " + superBlock.getiNodeTableSize());
-        System.out.println("iNode table size (bytes):    " + superBlock.getiNodeTableSize() * superBlock.getBlockSize());
-        System.out.println("Total no. of block groups:   " + (int) Math.ceil((double)superBlock.getTotalBlocks() / superBlock.getBlocksPerGroup()));
-        System.out.println("Total volume size (bytes):   " + superBlock.getTotalBlocks() * superBlock.getBlockSize());
-        System.out.println("Number of group descriptors: " + (int) Math.ceil((double)superBlock.getTotalBlocks() / superBlock.getBlocksPerGroup()));
-        System.out.println("--------------------\n");
+    public void printSuperblockInfo(SuperBlock superBlock) {
+        System.out.println("\n--------------------\n\033[1mSuperblock Information:\033[0m\n--------------------");
+        System.out.println(superBlock.getSuperBlockInfo() + "--------------------\n");
+    }
+
+    /** 
+     * Method to print further information derived from the super block data.
+     * The superblock holds characteristics of the filesystem.
+     * Further information is printed, which is derived from the superblock fields.
+     */
+    public void printFurtherSuperBlockInfo(SuperBlock superBlock) {
+        System.out.println("--------------------\n\033[1mFurther Information:\033[0m\n--------------------");
+        System.out.println(superBlock.getFurtherSuperBlockInfo() + "--------------------\n");
     }
 
     /**
      * Outputs all fields relevant to a given iNode.
      */
-    public static void printINodeInfo(INode iNode) {
+    public void printINodeInfo(INode iNode) {
         System.out.println("\n----------");
         System.out.println("iNode " + iNode.getINodeNumber() + " information: ");
         System.out.println("----------");

@@ -1,4 +1,4 @@
-package coursework;
+package ext2;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -126,5 +126,28 @@ public class SuperBlock extends DataBlock {
 
     public int getiNodeTableSize() {
         return (this.getiNodesPerGroup() * this.getiNodeSize() / (this.getBlockSize()));
+    }
+
+    public String getSuperBlockInfo() {
+        String superBlockString = "";
+        superBlockString += "Total number of iNodes:      "  + this.getTotaliNodes()+ "\n";
+        superBlockString += "Total number of blocks:      "  + this.getTotalBlocks()+ "\n";
+        superBlockString += "Block size (bytes):          "  + this.getBlockSize()+ "\n";
+        superBlockString += "No. of blocks per group:     "  + this.getBlocksPerGroup()+ "\n";
+        superBlockString += "No. of iNodes per group:     "  + this.getiNodesPerGroup()+ "\n";
+        superBlockString += "Magic number:                "  + this.getMagicNumber()+ "\n";
+        superBlockString += "Size of each iNode (bytes):  "  + this.getiNodeSize() + "\n";
+        superBlockString += "Volume label (disk name):    '" + this.getVolumeLbl() + "'\n";
+        return superBlockString;
+    }
+
+    public String getFurtherSuperBlockInfo() {
+        String furtherInfo = "";
+        furtherInfo += "iNode table size (blocks):   " + this.getiNodeTableSize() + "\n";
+        furtherInfo += "iNode table size (bytes):    " + this.getiNodeTableSize() * this.getBlockSize() + "\n";
+        furtherInfo += "Total no. of block groups:   " + (int) Math.ceil((double)this.getTotalBlocks() / this.getBlocksPerGroup()) + "\n";
+        furtherInfo += "Number of group descriptors: " + (int) Math.ceil((double)this.getTotalBlocks() / this.getBlocksPerGroup()) + "\n";
+        furtherInfo += "Total volume size (bytes):   " + this.getTotalBlocks() * this.getBlockSize() + "\n";
+        return furtherInfo;
     }
 }

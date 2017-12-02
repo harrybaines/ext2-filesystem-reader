@@ -1,4 +1,4 @@
-package coursework;
+package ext2;
 
 import java.io.RandomAccessFile;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package coursework;
+package ext2;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -67,8 +67,7 @@ public class Ext2File extends DataBlock {
      */
     public byte[] read(long startByte, long length) throws NullPointerException {
 
-        byte[] byteArray = new byte[(int)length];
-        ByteBuffer dataBytesBuffer = ByteBuffer.wrap(byteArray);
+        List<Byte> dataBytesList = new ArrayList<Byte>();
 
         if (iNodeForFileToOpen != null) {
 
@@ -81,17 +80,22 @@ public class Ext2File extends DataBlock {
             byte[] dataBlocksFromPointers = iNodeForFileToOpen.getDataBlocksFromPointers();
             ByteBuffer dataBlocksBuffer = ByteBuffer.wrap(dataBlocksFromPointers);
 
-            for (int i = (int)startByte; i < byteArray.length; i++) {
+            for (int i = (int)startByte; i < (int) length; i++) {
                 if (i >= dataBlocksBuffer.limit())
                     break;
-                dataBytesBuffer.put(dataBlocksBuffer.get(i));
+                if (dataBlocksBuffer.get(i) != 0)                   // SORT OUT - HOLES IN FILES - SEE PDF
+                    dataBytesList.add(dataBlocksBuffer.get(i));
                 this.position++;
             }
         }
         else
             System.out.println(this.filePathString + " - couldn't read this file.");
 
-        return dataBytesBuffer.array();
+        byte[] byteArray = new byte[dataBytesList.size()];
+        for (int i = 0; i < byteArray.length; i++)
+            byteArray[i] = dataBytesList.get(i);
+
+        return byteArray;
     }
 
     /**

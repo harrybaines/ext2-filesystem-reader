@@ -1,4 +1,4 @@
-package coursework;
+package ext2;
 
 /**
  * Name: Driver
@@ -20,10 +20,13 @@ public class Driver {
 
         long startTime = System.currentTimeMillis();
 
-
         // Create new volume instance for 'ext2fs' and print the super block info
-        Volume vol = new Volume("ext2fs");
-        Helper.printSuperblockInfo(vol.getSuperblock());
+        Volume vol = new Volume("volumes/ext2fs");
+        Helper h = new Helper();
+        h.printSuperblockInfo(vol.getSuperblock());
+        h.printFurtherSuperBlockInfo(vol.getSuperblock());
+
+        // Create new GUI instance
         Ext2Reader e = new Ext2Reader(vol);
 
         /* CREATE NEW FILE INSTANCES */
@@ -46,7 +49,7 @@ public class Driver {
         Ext2File deepDownFile = new Ext2File(vol, "/deep/down/in/the/filesystem/there/lived/a/file");
         deepDownFile.printDirectoryInfo();
         byte deepDownBuf[] = deepDownFile.read(0L, deepDownFile.getSize());
-        Helper.dumpHexBytes(deepDownBuf);
+        h.dumpHexBytes(deepDownBuf, true);
         deepDownFile.printFileContents(deepDownBuf);
 
 
@@ -56,30 +59,15 @@ public class Driver {
         dirStart.printFileContents(dirStartBuf);
 
 
-        Ext2File dirEnd = new Ext2File(vol, "/files/dir-e");
-        byte dirEndBuf[] = dirEnd.read(0L, dirEnd.getSize());
-        dirEnd.printFileContents(dirEndBuf);
-
-
-        Ext2File indStart = new Ext2File(vol, "/files/ind-s");
-        byte indStartBuf[] = indStart.read(0L, indStart.getSize());
-        indStart.printFileContents(indStartBuf);
-
-
         Ext2File indEnd = new Ext2File(vol, "/files/ind-e");
         byte indEndBuf[] = indEnd.read(0L, indEnd.getSize());
         indEnd.printFileContents(indEndBuf);
 
 
-        Ext2File doubleStart = new Ext2File(vol, "/files/dbl-ind-s");
-        byte doubleStartBuf[] = doubleStart.read(0L, doubleStart.getSize());
-        doubleStart.printFileContents(doubleStartBuf);
-
-
         Ext2File doubleEnd = new Ext2File(vol, "/files/dbl-ind-e");
         byte doubleEndBuf[] = doubleEnd.read(0L, 21);
         doubleEnd.printFileContents(doubleEndBuf);
-        Helper.dumpHexBytes(doubleEndBuf);
+        h.dumpHexBytes(doubleEndBuf, true);
 
 
         Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
