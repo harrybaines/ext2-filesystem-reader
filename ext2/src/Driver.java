@@ -22,12 +22,11 @@ public class Driver {
 
         // Create new volume instance for 'ext2fs' and print the super block info
         Volume vol = new Volume("volumes/ext2fs");
+
+        // Create new helper class for debugging
         Helper h = new Helper();
         h.printSuperblockInfo(vol.getSuperblock());
         h.printFurtherSuperBlockInfo(vol.getSuperblock());
-
-        // Create new GUI instance
-        Ext2Reader e = new Ext2Reader(vol);
 
         /* CREATE NEW FILE INSTANCES */
         // 1. Create new file
@@ -41,10 +40,7 @@ public class Driver {
         twoCities.printDirectoryInfo();
         // twoCities.seek(20);
         // byte twoCitiesBuf[] = twoCities.read(twoCities.getPosition(), twoCities.getSize());
-
-        byte twoCitiesBuf[] = twoCities.read(0L, twoCities.getSize());
-        twoCities.printFileContents(twoCitiesBuf);
-
+        // twoCities.printFileContents(twoCitiesBuf);
 
         Ext2File deepDownFile = new Ext2File(vol, "/deep/down/in/the/filesystem/there/lived/a/file");
         deepDownFile.printDirectoryInfo();
@@ -52,44 +48,34 @@ public class Driver {
         h.dumpHexBytes(deepDownBuf, true);
         deepDownFile.printFileContents(deepDownBuf);
 
-
         Ext2File dirStart = new Ext2File(vol, "/files/dir-s");
         dirStart.printDirectoryInfo();
-        byte dirStartBuf[] = dirStart.read(0L, dirStart.getSize());
-        dirStart.printFileContents(dirStartBuf);
-
+        dirStart.printFileContents(dirStart.read(0L, dirStart.getSize()));
 
         Ext2File indEnd = new Ext2File(vol, "/files/ind-e");
-        byte indEndBuf[] = indEnd.read(0L, indEnd.getSize());
-        indEnd.printFileContents(indEndBuf);
-
+        indEnd.printFileContents(indEnd.read(0L, indEnd.getSize()));
 
         Ext2File doubleEnd = new Ext2File(vol, "/files/dbl-ind-e");
         byte doubleEndBuf[] = doubleEnd.read(0L, 21);
         doubleEnd.printFileContents(doubleEndBuf);
         h.dumpHexBytes(doubleEndBuf, true);
 
-
         Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
-        byte tripleStartBuf[] = tripleStart.read(0L, 23); // issue
-        tripleStart.printFileContents(tripleStartBuf);
-
+        tripleStart.printFileContents(tripleStart.read(0L, 23)); // SIZE ISSUE
 
         Ext2File tripleEnd = new Ext2File(vol, "/files/trpl-ind-e");
-        byte tripleEndBuf[] = tripleEnd.read(0L, 20);
-        tripleEnd.printFileContents(tripleEndBuf);
-
+        tripleEnd.printFileContents(tripleEnd.read(0L, 20));
 
         Ext2File bigDir = new Ext2File(vol, "/big-dir");
-        //bigDir.printDirectoryInfo();
-
 
         System.out.println("Time to open all files: " + (System.currentTimeMillis() - startTime) + "ms\n");
+
+        // Create new GUI instance
+        Ext2Reader e = new Ext2Reader(vol);
     }
 
     /**
      * Main method to begin the driver program.
-     * 
      * @param args Unused.
      */
     public static void main(String[] args) {

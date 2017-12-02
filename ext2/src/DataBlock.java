@@ -8,14 +8,13 @@ import java.nio.ByteOrder;
  *
  * This class represents any data block which contains a sequence of bytes in the volume the user opened.
  * This class contains various methods which operate on arrays of bytes specified by the user (e.g. opening a file).
- * MORE
  *
  * @author Harry Baines
  */
 public class DataBlock {
     
-    private Volume vol;                 /* Volume reference which this file is part of */
-    private ByteBuffer byteBuffer;      /* Buffer containing bytes for this data block */
+    private Volume vol;                 /* Volume reference which this data block is part of */
+    private ByteBuffer byteBuffer;      /* Byte buffer to store all bytes for this data block */
 
     /** 
      * Constructor to initialise a data block represented inside a given volume.
@@ -23,10 +22,6 @@ public class DataBlock {
      */
     public DataBlock(Volume vol) {
         this.vol = vol;
-
-        // Wrap existing volume byte array to byte buffer
-        byteBuffer = ByteBuffer.wrap(vol.getFileInBytes());
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
 
     /**
@@ -39,15 +34,15 @@ public class DataBlock {
      */
     public byte[] readBlock(long startByte, long length) {
 
-        byte[] specifiedBytes = new byte[(int) length];
+        byteBuffer = ByteBuffer.allocate((int) length);
 
-        for (int curByte = 0; curByte < length; curByte++) {
-
-            specifiedBytes[curByte] = this.getUnsignedByte((int) startByte, this.byteBuffer);
+        // Read specified portion of bytes from volume byte buffer
+        for (int curByte = 0; curByte < byteBuffer.limit(); curByte++) {
+            byteBuffer.put(this.getByte((int) startByte, this.vol.getByteBuffer()));
             startByte++;
-
         }
-        return specifiedBytes;
+        
+        return byteBuffer.array();
     }
 
     /**
@@ -71,8 +66,8 @@ public class DataBlock {
     }
 
     /**
-     * Method to obtain an unsigned integer from a signed 2s complement integer (byte) from the byte buffer.
-     * @return Unsigned integer value.
+     * Method to obtain an unsigned byte from a signed 2s complement signed byte from the byte buffer.
+     * @return Unsigned byte.
      */
     public byte getByte(int i, ByteBuffer b) {
         return (b.get(i));
@@ -92,22 +87,6 @@ public class DataBlock {
      */
     public int getIntFromBytes(int i, ByteBuffer b) {
         return (b.getInt(i));
-    }
-
-    /**
-     * Method to obtain an unsigned integer from a signed 2s complement integer (byte) from the byte buffer.
-     * @return Unsigned integer value.
-     */
-    public byte getUnsignedByte(int i, ByteBuffer b) {
-        return ((byte) (b.get(i) & 0xFF));
-    }
-
-    /**
-     * Returns the byte buffer which stores bytes in this data block.
-     * @return The byte buffer of data block bytes.
-     */
-    public ByteBuffer getByteBuffer() {
-        return this.byteBuffer;
     }
 
     /** 

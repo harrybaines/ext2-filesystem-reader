@@ -2,7 +2,6 @@ package ext2;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-
 import java.util.List;
 import java.util.ArrayList;
 
@@ -18,7 +17,7 @@ import java.util.ArrayList;
  */
 public class Directory extends DataBlock {
 
-    private static final int INODE_LENGTH = 4;      /* The length of an iNode in a directory listing in bytes */
+    private static final int INODE_LENGTH    = 4;   /* The length of an iNode in a directory listing in bytes */
     private static final int NAME_LEN_OFFSET = 6;   /* The offset to find the namelen field in a directory listing */
     private static final int FILENAME_OFFSET = 8;   /* The offset to find the filename in a directory listing */
     
@@ -65,7 +64,12 @@ public class Directory extends DataBlock {
         return directoryStrings;
     }
 
-
+    /**
+     * Method which returns a String containing a full, single line in a directory listing.
+     *
+     * @param offset The current offset in the directory listing (see getFileInfo())
+     * @return The directory 'row' as a string.
+     */
     public String getDirRowAsString(int offset) {
 
         // Obtain iNode information at current row
@@ -80,7 +84,6 @@ public class Directory extends DataBlock {
         byte[] fileNameBytes = new byte[this.getByte(offset + NAME_LEN_OFFSET,  dirDataBuffer)];
         for (int i = 0; i < fileNameBytes.length; i++)
             fileNameBytes[i] = this.getByte(i + offset + FILENAME_OFFSET, dirDataBuffer);
-
         String filenameStr = new String(fileNameBytes);
 
         // Find the file you're supposed to search for in the current directory listing
@@ -93,18 +96,24 @@ public class Directory extends DataBlock {
         return rowString;
     }
 
+    /**
+     * Method which returns the iNode of a file for a particular 'row' in the directory listing.
+     *
+     * @param offset The current offset of the 'row' in the listing (see getDirRowAsString())
+     * @return The iNode of the file in this 'row'.
+     */
     public INode getINodeFromRow(int offset) {
 
-        int iNodeNumber = this.getIntFromBytes(offset, dirDataBuffer);
+        int iNodeNumber = this.getIntFromBytes(offset, this.dirDataBuffer);
 
-        int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
+        int tablePointerIndex = this.getTablePointerForiNode(iNodeNumber, this.superBlock.getiNodesPerGroup(), this.superBlock.getTotaliNodes());
 
-        return (new INode(iNodeNumber, superBlock.getiNodeTablePointers()[tablePointerIndex], tablePointerIndex, superBlock));
+        return (new INode(iNodeNumber, this.superBlock.getiNodeTablePointers()[tablePointerIndex], tablePointerIndex, this.superBlock));
     }
 
     /**
-     * Returns the iNode of the next row in the directory listing.
-     * @return The iNode instance of the next row.
+     * Returns the iNode of the next file to search for when traversing the file system.
+     * @return The iNode instance for the next file to find.
      */
     public INode getNextINode() {
         return this.nextINode;

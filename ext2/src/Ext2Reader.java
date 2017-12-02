@@ -160,7 +160,7 @@ public class Ext2Reader extends JFrame implements ActionListener {
             this.createNewFile(userEntry.getText(), true, viewHexAscii);
         }
         else if (e.getSource() == viewFileBtn) {
-            if (userEntry.getText().equals("/")) 
+            if (userEntry.getText().equals("/") && viewHexAscii) 
                 this.createNewFile(userEntry.getText(), false, true);
             else
                 this.createNewFile(userEntry.getText(), false, viewHexAscii);

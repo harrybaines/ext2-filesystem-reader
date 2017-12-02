@@ -2,6 +2,8 @@ package ext2;
 
 import java.io.RandomAccessFile;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * Name: Volume
@@ -17,21 +19,28 @@ public class Volume {
     
     private RandomAccessFile file;      /* The file that represents the volume the user wishes to open */
     private byte[] fileInBytes;         /* Array of bytes to store the entire volume */
-    private SuperBlock superBlock;
+    private ByteBuffer byteBuffer;      /* Byte buffer to store all bytes in this volume */
+    private SuperBlock superBlock;      /* Super block reference containing all info about the file system in this volume */
 
     /** 
      * Constructor used to open a file given a file path to that file.
      * @param filePath The file path to the volume.
      */
     public Volume(String filePath) { 
+
         try {
             if (this.openVolume(filePath))
                 System.out.println("----------\nVolume opened successfully.\n----------");
         } catch (IOException f) {
-            System.out.println("Couldn't find and open the file.");
+            System.out.println("----------\nCouldn't find/open the file.\n----------");
             System.exit(0);
         }
 
+        // Wrap existing volume byte array to byte buffer
+        byteBuffer = ByteBuffer.wrap(this.fileInBytes);
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        // Create new super block instance
         this.superBlock = new SuperBlock(this);
     }
 
@@ -56,10 +65,10 @@ public class Volume {
     }  
 
     /**
-     * Returns the entire volume in the form of an array of bytes.
-     * @return Array of bytes containing the volume.
+     * Returns the byte buffer which stores this entire volume, in bytes.
+     * @return The byte buffer of bytes in this volume.
      */
-    public byte[] getFileInBytes() {
-        return this.fileInBytes;
-    }     
+    public ByteBuffer getByteBuffer() {
+        return this.byteBuffer;
+    }   
 }
