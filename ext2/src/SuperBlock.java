@@ -24,17 +24,17 @@ public class SuperBlock extends DataBlock {
     private static final int INODE_SIZE_OFFSET = 88;          /* Offset, in bytes, in super block for iNode size */
     private static final int VOLUME_LBL_OFFSET = 120;         /* Offset, in bytes, in super block for volume label */
 
-    private int totaliNodes;                                /* The total number of iNodes in the file system */
-    private int totalBlocks;                                /* The total number of blocks in the file system */
-    private int blockSize;                                  /* The size of each block in the file system, in bytes */
-    private int blocksPerGroup;                             /* The number of blocks per block group in the file system */
-    private int iNodesPerGroup;                             /* The number of iNodes per block group in the file system */
-    private String magicNumber;                             /* The magic number which uniquely identifies the file system type */
-    private int iNodeSize;                                  /* The size of each iNode in the file system, in bytes */
-    private String volumeLbl;                               /* The volume label relevant to this file system, as a string */
+    private int totaliNodes;                                  /* The total number of iNodes in the file system */
+    private int totalBlocks;                                  /* The total number of blocks in the file system */
+    private int blockSize;                                    /* The size of each block in the file system, in bytes */
+    private int blocksPerGroup;                               /* The number of blocks per block group in the file system */
+    private int iNodesPerGroup;                               /* The number of iNodes per block group in the file system */
+    private String magicNumber;                               /* The magic number which uniquely identifies the file system type */
+    private int iNodeSize;                                    /* The size of each iNode in the file system, in bytes */
+    private String volumeLbl;                                 /* The volume label relevant to this file system, as a string */
 
-    private ByteBuffer byteBuffer;                          /* Byte buffer reference for setting super block values */
-    private int[] iNodeTablePointers;                       /* Array of all the iNode table pointers - the super block fields aid in it's construction */
+    private ByteBuffer byteBuffer;                            /* Byte buffer reference for setting super block values */
+    private int[] iNodeTablePointers;                         /* Array of all the iNode table pointers - the super block fields aid in it's construction */
 
     /**
      * Constructor to initialise a super block in a given volume.

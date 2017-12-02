@@ -61,9 +61,6 @@ public class Helper {
                 count++;
             }
             
-            if (print)
-                System.out.print(hexString);
-
             int asciiCount = 0;
 
             for (int i = 0; i < 16; i++) {
@@ -84,8 +81,10 @@ public class Helper {
             asciiString += "\n";
             hexBytesString += hexString + asciiString;
 
-            if (print)
+            if (print) {
+                System.out.print(hexString);
                 System.out.print(asciiString);
+            }
         }
 
         if (print)

@@ -84,7 +84,7 @@ public class INode extends DataBlock {
             }
         }
 
-        // Level 2 of indirection - DOUBLE INDIRECT
+        // Level 2 of indirection - DOUBLE INDIRECT MAKE MORE EFFICIENT!
         if (doubleIndirectPointer != 0) {
 
             // Obtains initial list of indirect pointers to begin indirection traversal
@@ -190,7 +190,7 @@ public class INode extends DataBlock {
         int[] hexCodes = { 0x0100, 0x0080, 0x0040, 0x0020, 0x0010, 
                           0x0008, 0x0004, 0x0002, 0x0001 };
         
-        //User/Group/Others can Read/Write/Execute
+        // User/Group/Others can Read/Write/Execute
         char[] permissions = { 'r', 'w', 'x' };
 
         // Obtain file mode read/write/execute permissions string
