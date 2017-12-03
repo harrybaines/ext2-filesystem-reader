@@ -1,5 +1,6 @@
 package ext2;
-
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 /**
  * Name: Driver
  *
@@ -27,6 +28,14 @@ public class Driver {
         Helper h = new Helper();
         h.printSuperblockInfo(vol.getSuperblock());
         h.printFurtherSuperBlockInfo(vol.getSuperblock());
+
+        byte[] byteArray = new byte[1024];
+        ByteBuffer b = vol.getByteBuffer();
+        for (int i = 0; i < 1024; i++) {
+            byteArray[i] = b.get(i + 1024);
+        }
+
+        h.dumpHexBytes(byteArray, true);
 
         /* CREATE NEW FILE INSTANCES */
         // 1. Create new file

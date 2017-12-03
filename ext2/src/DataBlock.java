@@ -11,7 +11,7 @@ import java.nio.ByteOrder;
  *
  * @author Harry Baines
  */
-public class DataBlock {
+public abstract class DataBlock {
     
     private Volume vol;                 /* Volume reference which this data block is part of */
     private ByteBuffer byteBuffer;      /* Byte buffer to store all bytes for this data block */
@@ -41,7 +41,7 @@ public class DataBlock {
             byteBuffer.put(this.getByte((int) startByte, this.vol.getByteBuffer()));
             startByte++;
         }
-        
+
         return byteBuffer.array();
     }
 
@@ -65,7 +65,7 @@ public class DataBlock {
         return tableIndex;
     }
 
-    /**
+    /** CHANGE
      * Method to obtain an unsigned byte from a signed 2s complement signed byte from the byte buffer.
      * @return Unsigned byte.
      */

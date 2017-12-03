@@ -15,14 +15,14 @@ import java.nio.ByteOrder;
  */
 public class SuperBlock extends DataBlock {
 
-    private static final int NUM_INODE_OFFSET = 0;            /* Offset, in bytes, in super block for number of iNodes */
-    private static final int NUM_BLOCKS_OFFSET = 4;           /* Offset, in bytes, in super block for number of blocks */
-    private static final int BLOCK_SIZE_OFFSET = 24;          /* Offset, in bytes, in super block for block size */
-    private static final int BLOCKS_PER_GROUP_OFFSET = 32;    /* Offset, in bytes, in super block for blocks per block group */
-    private static final int INODES_PER_GROUP_OFFSET = 40;    /* Offset, in bytes, in super block for iNodes per block group */
-    private static final int MAGIC_NUM_OFFSET = 56;           /* Offset, in bytes, in super block for magic number */
-    private static final int INODE_SIZE_OFFSET = 88;          /* Offset, in bytes, in super block for iNode size */
-    private static final int VOLUME_LBL_OFFSET = 120;         /* Offset, in bytes, in super block for volume label */
+    public static final int NUM_INODE_OFFSET = 0;             /* Offset, in bytes, in super block for number of iNodes */
+    public static final int NUM_BLOCKS_OFFSET = 4;            /* Offset, in bytes, in super block for number of blocks */
+    public static final int BLOCK_SIZE_OFFSET = 24;           /* Offset, in bytes, in super block for block size */
+    public static final int BLOCKS_PER_GROUP_OFFSET = 32;     /* Offset, in bytes, in super block for blocks per block group */
+    public static final int INODES_PER_GROUP_OFFSET = 40;     /* Offset, in bytes, in super block for iNodes per block group */
+    public static final int MAGIC_NUM_OFFSET = 56;            /* Offset, in bytes, in super block for magic number */
+    public static final int INODE_SIZE_OFFSET = 88;           /* Offset, in bytes, in super block for iNode size */
+    public static final int VOLUME_LBL_OFFSET = 120;          /* Offset, in bytes, in super block for volume label */
 
     private int totaliNodes;                                  /* The total number of iNodes in the file system */
     private int totalBlocks;                                  /* The total number of blocks in the file system */
@@ -55,11 +55,11 @@ public class SuperBlock extends DataBlock {
 
         // Initialise all super block fields
         this.blockSize      = 1024 * (int) Math.pow(2, this.byteBuffer.getInt(1024 + BLOCK_SIZE_OFFSET));
-        this.totaliNodes    = this.byteBuffer.getInt(this.blockSize + NUM_INODE_OFFSET);
+        this.totaliNodes    = this.getIntFromBytes(this.blockSize + NUM_INODE_OFFSET, this.byteBuffer);
         this.totalBlocks    = this.byteBuffer.getInt(this.blockSize + NUM_BLOCKS_OFFSET);
         this.blocksPerGroup = this.byteBuffer.getInt(this.blockSize + BLOCKS_PER_GROUP_OFFSET);
         this.iNodesPerGroup = this.byteBuffer.getInt(this.blockSize + INODES_PER_GROUP_OFFSET);
-        this.magicNumber    = String.format("0x%02X", this.byteBuffer.getInt(this.blockSize + MAGIC_NUM_OFFSET));
+        this.magicNumber    = String.format("0x%02X", this.byteBuffer.getShort(this.blockSize + MAGIC_NUM_OFFSET));
         this.iNodeSize      = this.byteBuffer.getInt(this.blockSize + INODE_SIZE_OFFSET);
         this.volumeLbl      = "";
 
@@ -77,9 +77,9 @@ public class SuperBlock extends DataBlock {
     private int[] getAllINodeTblPointers() {
 
         // Obtains array of iNode table pointers from all group descriptors
-        int numBlockGroups = (int) Math.ceil((double) this.getTotalBlocks() / (double) this.getBlocksPerGroup());
+        int numBlockGroups = (int) Math.ceil((double) this.totalBlocks / (double) this.blocksPerGroup);
 
-        GroupDescriptor[] groupDescs = new GroupDescriptor[numBlockGroups];
+        // Array of iNode table pointers
         int[] iNodeTablePointers = new int[numBlockGroups];
 
         // Finds the group descriptors using block group 0 (1024 bytes after superblock)
@@ -91,8 +91,7 @@ public class SuperBlock extends DataBlock {
 
         // Create new GroupDescriptor instances to obtain iNode table pointers
         while (currentDesc < numBlockGroups) {
-            groupDescs[currentDesc] = new GroupDescriptor(groupDescBuffer, currentDesc, this);
-            iNodeTablePointers[currentDesc] = groupDescs[currentDesc].getINodeTblPointer();
+            iNodeTablePointers[currentDesc] = new GroupDescriptor(groupDescBuffer, currentDesc, this).getINodeTblPointer();
             currentDesc++;
         }
         return iNodeTablePointers;
@@ -104,12 +103,12 @@ public class SuperBlock extends DataBlock {
      */
     public String getSuperBlockInfo() {
         String superBlockString = "";
-        superBlockString += "Total number of iNodes:      "  + this.getTotaliNodes()+ "\n";
-        superBlockString += "Total number of blocks:      "  + this.getTotalBlocks()+ "\n";
-        superBlockString += "Block size (bytes):          "  + this.getBlockSize()+ "\n";
-        superBlockString += "No. of blocks per group:     "  + this.getBlocksPerGroup()+ "\n";
-        superBlockString += "No. of iNodes per group:     "  + this.getiNodesPerGroup()+ "\n";
-        superBlockString += "Magic number:                "  + this.getMagicNumber()+ "\n";
+        superBlockString += "Total number of iNodes:      "  + this.getTotaliNodes() + "\n";
+        superBlockString += "Total number of blocks:      "  + this.getTotalBlocks() + "\n";
+        superBlockString += "Block size (bytes):          "  + this.getBlockSize() + "\n";
+        superBlockString += "No. of blocks per group:     "  + this.getBlocksPerGroup() + "\n";
+        superBlockString += "No. of iNodes per group:     "  + this.getiNodesPerGroup() + "\n";
+        superBlockString += "Magic number:                "  + this.getMagicNumber() + "\n";
         superBlockString += "Size of each iNode (bytes):  "  + this.getiNodeSize() + "\n";
         superBlockString += "Volume label (disk name):    '" + this.getVolumeLbl() + "'\n";
         return superBlockString;

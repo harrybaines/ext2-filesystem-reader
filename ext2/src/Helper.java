@@ -3,24 +3,23 @@ package ext2;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+/**
+ * Name: Helper
+ * 
+ * This class provides methods for outputting various file system information.
+ * An instance of this class must be created before user can use these methods.
+ *
+ * @author Harry Baines
+ */
 public class Helper {
 
-    private String hexBytesString;
+    private String hexBytesString;     /* Stores the full string containing hex and ASCII values */
 
+    /**
+     * Constructor to initialise the Helper instance variables.
+     */
     public Helper() {
         this.hexBytesString = "";
-    }
-
-    public void printPointers(List<Integer> pointers) {
-        System.out.println("----------");
-        for (int i : pointers)
-           System.out.println("pointer: " + i);
-        System.out.println("----------\n");
-    }
-
-    public String getHexBytesString(byte[] bytes) {
-        this.dumpHexBytes(bytes, false);
-        return this.hexBytesString;
     }
 
     /**
@@ -34,17 +33,20 @@ public class Helper {
                 
         int count = 0;
         int byteCount = 0;
+        int asciiCount = 0;
         this.hexBytesString = "";
 
         System.out.println("\n----------\n\033[1mByte Count: " + bytes.length + "\033[0m");
         System.out.println("----------");
         
+        // Iterate over all the bytes in the array
         while (count < bytes.length) {
 
             String hexString = "";
             String asciiString = "";
             byteCount = 0;
 
+            // Generate hex
             for (int i = 0; i < 16; i++) {
 
                 // Add XX entries for too few bytes
@@ -60,9 +62,9 @@ public class Helper {
                     hexString += "| ";
                 count++;
             }
-            
-            int asciiCount = 0;
+            asciiCount = 0;
 
+            // Generate ASCII
             for (int i = 0; i < 16; i++) {
 
                 if (asciiCount >= byteCount)
@@ -81,20 +83,43 @@ public class Helper {
             asciiString += "\n";
             hexBytesString += hexString + asciiString;
 
-            if (print) {
-                System.out.print(hexString);
-                System.out.print(asciiString);
-            }
+            if (print)
+                System.out.print(hexString + asciiString);
         }
 
         if (print)
             System.out.println("----------\n");
     }
 
+    /**
+     * Prints out the dynamic list of pointer integers specified by the user.
+     * @param pointers The dynamic list of pointers to print.
+     */
+    public void printPointers(List<Integer> pointers) {
+        System.out.println("----------");
+        for (int i : pointers)
+           System.out.println("pointer: " + i);
+        System.out.println("----------\n");
+    }
+
+    /**
+     * Returns the string containing all the bytes specified by the user.
+     * This method obtains the byte string without printing to the console.
+     *
+     * @param bytes The array of bytes to generate a string for.
+     * @return The string containing all the bytes provided in the array.
+     */
+    public String getHexBytesString(byte[] bytes) {
+        this.dumpHexBytes(bytes, false);
+        return this.hexBytesString;
+    }
+
     /** 
      * Method to print all information containined within the superblock.
      * The superblock holds characteristics of the filesystem.
      * Further information is printed, which is derived from the superblock fields.
+     *
+     * @param superBlock The super block to print information for.
      */
     public void printSuperblockInfo(SuperBlock superBlock) {
         System.out.println("\n--------------------\n\033[1mSuperblock Information:\033[0m\n--------------------");
@@ -105,6 +130,8 @@ public class Helper {
      * Method to print further information derived from the super block data.
      * The superblock holds characteristics of the filesystem.
      * Further information is printed, which is derived from the superblock fields.
+     *
+     * @param superBlock The super block to print information for.
      */
     public void printFurtherSuperBlockInfo(SuperBlock superBlock) {
         System.out.println("--------------------\n\033[1mFurther Information:\033[0m\n--------------------");
@@ -113,6 +140,7 @@ public class Helper {
 
     /**
      * Outputs all fields relevant to a given iNode.
+     * @param iNode The iNode to print information for.
      */
     public void printINodeInfo(INode iNode) {
         System.out.println("\n----------");
