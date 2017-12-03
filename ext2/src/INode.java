@@ -5,34 +5,58 @@ import java.nio.ByteOrder;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Date;
 
-import java.text.DateFormat;
+import java.util.Date;
 import java.text.SimpleDateFormat;
 
+/**
+ * Name: iNode
+ * 
+ * This class represents an iNode in the filesystem.
+ * Every file can be located by it's respective iNode and contains metadata about the file.
+ * The iNode contains pointers to the blocks which are represented by the iNode.
+ *
+ * @author Harry Baines
+ * @see DataBlock
+ */
 public class INode extends DataBlock {
 
-    private static final int[] fileModeCodes = { 0x0100, 0x0080, 0x0040, 0x0020, 0x0010,  /* File mode hex codes */
-                                                0x0008, 0x0004, 0x0002, 0x0001 }; 
+    public static final int[] fileModeCodes = { 0x4000, 0x0100, 0x0080, 0x0040, 0x0020, 
+                                                0x0010, 0x0008, 0x0004, 0x0002, 0x0001 };   /* File mode hex codes */
 
-    private static final char[] permissions = { 'r', 'w', 'x' };    /* User/Group/Others can Read/Write/Execute */
-                          
-    private ByteBuffer iNodeBuffer;     /* Byte buffer to store the bytes in the iNode */
-    private byte[] iNodeBytes;          /* Array to store all bytes in the iNode */
+    public static final char[] permissions = { 'r', 'w', 'x' };    /* User/Group/Others can Read/Write/Execute */
 
-    private SuperBlock superBlock;      /* The super block reference to obtain file system characteristics */
-    private int indirectBlockSize;      /* The size of each indirect block containing block pointers */
-    private int iNodeTblPointer;        /* Pointer to an iNode table pointer */
+    public static final int FILE_MODE_OFFSET       = 0;     /* Offset, in bytes, for the file mode */
+    public static final int USER_ID_LOWER_OFFSET   = 2;     /* Offset, in bytes, for the lower 16 bits of the user ID */
+    public static final int FILE_SIZE_LOWER_OFFSET = 4;     /* Offset, in bytes, for the lower 16 bits of the file size */
+    public static final int LAST_ACCESS_OFFSET     = 8;     /* Offset, in bytes, for the last access time */
+    public static final int CREATION_OFFSET        = 12;    /* Offset, in bytes, for the creation time */
+    public static final int LAST_MODIFIED_OFFSET   = 16;    /* Offset, in bytes, for the last modified time */
+    public static final int DELETED_OFFSET         = 20;    /* Offset, in bytes, for the deleted time */   
+    public static final int GROUP_ID_LOWER_OFFSET  = 24;    /* Offset, in bytes, for the lower 16 bits of the group ID */
+    public static final int HARD_LINKS_OFFSET      = 26;    /* Offset, in bytes, for the number of hard links */
+    public static final int DIRECT_POINTERS_OFFSET = 40;    /* Offset, in bytes, for the direct pointers */   
+    public static final int INDIRECT_OFFSET        = 88;    /* Offset, in bytes, for the indirect pointer */
+    public static final int DBL_INDIRECT_OFFSET    = 92;    /* Offset, in bytes, for the double indirect pointer */
+    public static final int TRPL_INDIRECT_OFFSET   = 96;    /* Offset, in bytes, for the triple indirect pointer */
+    public static final int FILE_SIZE_UPPER_OFFSET = 108;   /* Offset, in bytes, for the upper 32 bits of the file size */
+        
+    private ByteBuffer iNodeBuffer;                         /* Byte buffer to store the bytes in the iNode */
+    private byte[] iNodeBytes;                              /* Array to store all bytes in the iNode */
 
-    private int groupNum;               /* The group number this iNode belongs in */
-    private int iNodeNumber;            /* The number for this iNode */
-    private int iNodeOffset;            /* The offset, in bytes, the iNode is at in the filsystem */
-    private int fileMode;               /* The file mode field for this iNode */
+    private SuperBlock superBlock;                          /* The super block reference to obtain file system characteristics */
+    private int indirectBlockSize;                          /* The size of each indirect block containing block pointers */
+    private int iNodeTblPointer;                            /* Pointer to an iNode table pointer */
+
+    private int groupNum;                                   /* The group number this iNode belongs in */
+    private int iNodeNumber;                                /* The number for this iNode */
+    private int iNodeOffset;                                /* The offset, in bytes, that the iNode is at in the filsystem */
 
     /**
      * Constructor to initialise an iNode with the relevant fields.
      *
      * @param iNodeNumber The number of this iNode.
+     * @param iNodeTblPointer The pointer to the iNode table in which this iNode belongs.
      * @param groupNum The group the iNode belongs to.
      * @param superBlock The reference to the super block for file system information.
      */
@@ -56,7 +80,8 @@ public class INode extends DataBlock {
         iNodeBuffer = ByteBuffer.wrap(iNodeBytes);
         iNodeBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
-        indirectBlockSize = superBlock.getBlockSize() / 4;
+        // Set the indirect block size
+        indirectBlockSize = superBlock.getBlockSize() / Integer.BYTES;
     }
 
     /**
@@ -71,42 +96,21 @@ public class INode extends DataBlock {
         List<Byte> allDataBlocks = this.getDataBlocks(this.getDirectPointers());
 
         // Find indirect pointers and search through blocks to find data blocks
-        int indirectPointer = this.getIndirectPointer();                            // Initial indirect pointer in iNode
-        int doubleIndirectPointer = this.getDoubleIndirectPointer();                // Initial double-indirect pointer in iNode
-        int tripleIndirectPointer = this.getTripleIndirectPointer();                // Initial triple-indirect pointer in iNode
+        int singleIndirectPointer = this.getIndirectPointer();                    // Initial indirect pointer in iNode
+        int doubleIndirectPointer = this.getDoubleIndirectPointer();              // Initial double-indirect pointer in iNode
+        int tripleIndirectPointer = this.getTripleIndirectPointer();              // Initial triple-indirect pointer in iNode
 
-        // Level 1 of indirection (single indirection)
-        if (indirectPointer != 0) {
+        // Single indirection
+        if (singleIndirectPointer != 0)
+            this.addDataBlocksForInitialPointer(singleIndirectPointer, 1, allDataBlocks);
 
-            // Obtains initial list of indirect pointers to begin indirection traversal
-            // Transfer all found data from indirect pointers into 'master' list
-            for (byte b : this.getDataBlocks(this.getIndirectBlockPointers(indirectPointer)))
-                allDataBlocks.add(b);
-        }
+        // Double indirection
+        if (doubleIndirectPointer != 0)
+            this.addDataBlocksForInitialPointer(doubleIndirectPointer, 2, allDataBlocks);
 
-        // Level 2 of indirection - (double indirection) MAKE MORE EFFICIENT!
-        if (doubleIndirectPointer != 0) {
-
-            // Obtains initial list of indirect pointers to begin indirection traversal            
-            // Obtains all non-0 pointers from 3 levels of indirection 
-            List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(2, this.getIndirectBlockPointers(doubleIndirectPointer));
-
-            // Transfer all found data from indirect pointers into 'master' list
-            for (byte b : this.getDataBlocks(pointersFromIndirectionLevel))
-                allDataBlocks.add(b);
-        }
-
-        // Level 3 of indirection - (triple indirection)
-        if (tripleIndirectPointer != 0) {
-           
-            // Obtains initial list of indirect pointers to begin indirection traversal            
-            // Obtains all non-0 pointers from 3 levels of indirection
-            List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(3, this.getIndirectBlockPointers(tripleIndirectPointer));
-
-            // Transfer all found data from indirect pointers into 'master' list
-            for (byte b : this.getDataBlocks(pointersFromIndirectionLevel))
-                allDataBlocks.add(b);
-        }
+        // Triple indirection
+        if (tripleIndirectPointer != 0)
+            this.addDataBlocksForInitialPointer(tripleIndirectPointer, 3, allDataBlocks);
 
         // Transfer dynamic array list into array to return
         byte[] byteArray = new byte[allDataBlocks.size()];
@@ -117,6 +121,25 @@ public class INode extends DataBlock {
     }
 
     /**
+     * Method which adds data blocks to the passed dynamic list of bytes.
+     * This method first calls getPointersByIndirectionLevel() based on the level passed.
+     * Then using these pointers, the relevant data blocks are added to the dynamic list.
+     *
+     * @param indirectPointer The initial indirect pointer that points to the first block of indirect pointers.
+     * @param indLevel The level of indirection the method should traverse up to.
+     * @param allDataBlocks The dynamic list of data bytes from data blocks.
+     */
+    private void addDataBlocksForInitialPointer(int indirectPointer, int indLevel, List<Byte> allDataBlocks) {
+
+        // Obtains all non-0 pointers from 'indLevel' levels of indirection, given an initial indirect pointer 
+        List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(indLevel, this.getIndirectBlockPointers(indirectPointer));
+
+        // Transfer all found data from indirect pointers into 'master' list
+        for (byte b : this.getDataBlocks(pointersFromIndirectionLevel))
+            allDataBlocks.add(b);
+    }
+
+    /**
      * Method to traverse the file system given the level of indirection to traverse.
      * The method is given an initial list of indirection pointers to begin the traversal.
      *
@@ -124,7 +147,7 @@ public class INode extends DataBlock {
      * @param indirectTableBlockPointers The initial dynamic list of pointers to begin traversal.
      * @return The dynamic list of pointers to blocks found from the traversal.
      */
-    public List<Integer> getPointersByIndirectionLevel(int indirectionLevel, List<Integer> indirectTableBlockPointers) {
+    private List<Integer> getPointersByIndirectionLevel(int indirectionLevel, List<Integer> indirectTableBlockPointers) {
 
         // Stores all pointers found that aren't 0
         List<Integer> blockPointers = new ArrayList<Integer>();
@@ -132,17 +155,21 @@ public class INode extends DataBlock {
         // Iterate over first block of pointers
         for (int i : indirectTableBlockPointers) {
             if (i != 0) {
-                // Iterate over 2nd block of pointers (level 2) and get all pointers in the block it points to
-                for (int j : this.getIndirectBlockPointers(i)) {
-                    if (j != 0) {
-                        // Add data to list if at level 2, otherwise ignore - find level 
-                        if (indirectionLevel == 2)
-                            blockPointers.add(j);
-                        else if (indirectionLevel == 3) {
-                            // Get level 3 block pointers and iterate over final block of pointers (level 3)
-                            for (int k : this.getIndirectBlockPointers(j))
-                                if (k != 0)
-                                    blockPointers.add(k);
+                if (indirectionLevel == 1)
+                    blockPointers.add(i);
+                else {
+                    // Iterate over 2nd block of pointers (level 2) and get all pointers in the block each one points to
+                    for (int j : this.getIndirectBlockPointers(i)) {
+                        if (j != 0) {
+                            // Add data to list if at level 2, otherwise ignore
+                            if (indirectionLevel == 2)
+                                blockPointers.add(j);
+                            else {
+                                // Iterate over final block of pointers (level 3)
+                                for (int k : this.getIndirectBlockPointers(j))
+                                    if (k != 0)
+                                        blockPointers.add(k);
+                            }
                         }
                     }
                 }
@@ -152,12 +179,12 @@ public class INode extends DataBlock {
     }
 
     /**
-     * Obtains the data blocks given a set of block pointers.
+     * Obtains a dynamic list of data blocks given a set of block pointers.
      *
      * @param pointers Dynamic list of pointers that point to data blocks.
      * @return Dynamic byte list from data blocks.
      */
-    public List<Byte> getDataBlocks(List<Integer> pointers) {
+    private List<Byte> getDataBlocks(List<Integer> pointers) {
 
         // Create array of data blocks found from indirect pointers
         List<Byte> byteList = new ArrayList<Byte>();
@@ -166,9 +193,8 @@ public class INode extends DataBlock {
         for (int i : pointers) {
             if (i != 0) {
                 byte[] dataBlocksArray = this.readBlock(i * superBlock.getBlockSize(), superBlock.getBlockSize());
-                for (int curBlock = 0; curBlock < dataBlocksArray.length; curBlock++) {
+                for (int curBlock = 0; curBlock < dataBlocksArray.length; curBlock++)
                     byteList.add(dataBlocksArray[curBlock]);
-                }
             }
         }
         return byteList;
@@ -178,14 +204,16 @@ public class INode extends DataBlock {
      * Retrieves the 12 4-byte integer direct data block pointers, directly from the iNode.
      * @return An array of the 12 direct data block pointers.
      */
-    public List<Integer> getDirectPointers() {
-        int count = 0;
+    private List<Integer> getDirectPointers() {
+
         List<Integer> directPointers = new ArrayList<Integer>();
+
+        int count = 0;
         while (count < 12) {
-            directPointers.add(this.getIntFromBytes(40 + (4*count), iNodeBuffer));
+            directPointers.add(iNodeBuffer.getInt(DIRECT_POINTERS_OFFSET + (Integer.BYTES * count)));
             count++;
         }
-        return (directPointers);
+        return directPointers;
     }
 
     /**
@@ -194,31 +222,22 @@ public class INode extends DataBlock {
      * @param blockNum The number of the block to get indirect pointers from.
      * @return The dynamic list of indirect block pointers.
      */
-    public List<Integer> getIndirectBlockPointers(int blockNum) {
+    private List<Integer> getIndirectBlockPointers(int blockNum) {
         
         List<Integer> indirectPointers = new ArrayList<Integer>();
 
         // Obtains bytes for the indirect table of block pointers
-        byte[] indirectTableBytes = this.readBlock(blockNum*superBlock.getBlockSize(), superBlock.getBlockSize());
+        byte[] indirectTableBytes = this.readBlock(blockNum * superBlock.getBlockSize(), superBlock.getBlockSize());
         ByteBuffer indirectBuffer = ByteBuffer.wrap(indirectTableBytes);
         indirectBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
         // Iterate over the indirect table block size
         int count = 0;
         while (count < indirectBlockSize) {
-            indirectPointers.add(this.getIntFromBytes(4*count, indirectBuffer));
+            indirectPointers.add(indirectBuffer.getInt(Integer.BYTES * count));
             count++;
         }
-
         return indirectPointers;
-    }
-
-    /**
-     * Retrieves the file mode for the given iNode as a string.
-     * @return A string representation of the file mode.
-     */
-    public short getFileMode() {
-        return this.getShortFromBytes(0, iNodeBuffer);
     }
 
     /**
@@ -233,13 +252,21 @@ public class INode extends DataBlock {
         short fileMode = getFileMode();
 
         // Obtain file mode read/write/execute permissions string - Directory or File
-        String fileInfo = ((fileMode & 0x4000) > 0) ? "d" : "-";  
+        String fileInfo = ((fileMode & fileModeCodes[0]) > 0) ? "d" : "-";  
 
         // Iterate over possible file mode hex codes
-        for (int i = 0; i < fileModeCodes.length; i++)
-            fileInfo += ((fileMode & fileModeCodes[i]) > 0) ? permissions[i % permissions.length] : "-";
+        for (int i = 1; i < fileModeCodes.length; i++)
+            fileInfo += ((fileMode & fileModeCodes[i]) > 0) ? permissions[(i-1) % permissions.length] : "-";
 
         return fileInfo;
+    }
+
+    /**
+     * Retrieves the file mode for the given iNode as a string.
+     * @return A string representation of the file mode.
+     */
+    public short getFileMode() {
+        return (iNodeBuffer.getShort(FILE_MODE_OFFSET));
     }
 
     /**
@@ -247,7 +274,7 @@ public class INode extends DataBlock {
      * @return The user ID.
      */
     public short getUserID() {
-        return (this.getShortFromBytes(2, iNodeBuffer));
+        return (iNodeBuffer.getShort(USER_ID_LOWER_OFFSET));
     }
 
     /**
@@ -255,7 +282,7 @@ public class INode extends DataBlock {
      * @return Lower 32 bit size of file in bytes.
      */
     public int getLowerFileSize() {
-        return (this.getIntFromBytes(4, iNodeBuffer));
+        return (iNodeBuffer.getInt(FILE_SIZE_LOWER_OFFSET));
     }
 
     /**
@@ -263,9 +290,9 @@ public class INode extends DataBlock {
      * @return String representation of last access time.
      */
     public String getLastAccessTime() {
-        Date accessDate = new Date( (long) this.getIntFromBytes(8, iNodeBuffer) * 1000 );
+        Date accessDate = new Date( (long) iNodeBuffer.getInt(LAST_ACCESS_OFFSET) * 1000 );
         String formattedTime = new SimpleDateFormat("MMM dd HH:mm").format(accessDate);
-        return (formattedTime);
+        return formattedTime;
     }
 
     /**
@@ -273,9 +300,9 @@ public class INode extends DataBlock {
      * @return String representation of creation time.
      */
     public String getCreationTime() {
-        Date creationDate = new Date( (long) this.getIntFromBytes(12, iNodeBuffer) * 1000 );
+        Date creationDate = new Date( (long) iNodeBuffer.getInt(CREATION_OFFSET) * 1000 );
         String formattedTime = new SimpleDateFormat("MMM dd HH:mm").format(creationDate);
-        return (formattedTime);
+        return formattedTime;
     }
 
     /**
@@ -283,9 +310,9 @@ public class INode extends DataBlock {
      * @return String representation of last modified time.
      */
     public String getLastModifiedTime() {
-        Date modifiedDate = new Date( (long) this.getIntFromBytes(16, iNodeBuffer) * 1000 );
+        Date modifiedDate = new Date( (long) iNodeBuffer.getInt(LAST_MODIFIED_OFFSET) * 1000 );
         String formattedTime = new SimpleDateFormat("MMM dd HH:mm").format(modifiedDate);
-        return (formattedTime);
+        return formattedTime;
     }
 
     /**
@@ -293,9 +320,9 @@ public class INode extends DataBlock {
      * @return String representation of deleted time.
      */
     public String getDeletedTime() {
-        int delTime = this.getIntFromBytes(20, iNodeBuffer);
+        int delTime = iNodeBuffer.getInt(DELETED_OFFSET);
         String deletedTime = (delTime == 0) ? "-" : new Date( (long) delTime * 1000 ).toString();
-        return (deletedTime);
+        return deletedTime;
     }
 
     /**
@@ -303,7 +330,7 @@ public class INode extends DataBlock {
      * @return The group ID.
      */
     public int getGroupID() {
-        return (this.getShortFromBytes(24, iNodeBuffer));
+        return (iNodeBuffer.getShort(GROUP_ID_LOWER_OFFSET));
     }
 
     /**
@@ -311,7 +338,7 @@ public class INode extends DataBlock {
      * @return The number of hard links.
      */
     public int getNumHardLinks() {
-        return (this.getShortFromBytes(26, iNodeBuffer));
+        return (iNodeBuffer.getShort(HARD_LINKS_OFFSET));
     }
 
     /**
@@ -319,7 +346,7 @@ public class INode extends DataBlock {
      * @return The single-indirect data block pointer.
      */
     public int getIndirectPointer() {
-        return (this.getIntFromBytes(88, iNodeBuffer));
+        return (iNodeBuffer.getInt(INDIRECT_OFFSET));
     }
 
     /**
@@ -327,7 +354,7 @@ public class INode extends DataBlock {
      * @return The double-indirect data block pointer.
      */
     public int getDoubleIndirectPointer() {
-        return (this.getIntFromBytes(92, iNodeBuffer));
+        return (iNodeBuffer.getInt(DBL_INDIRECT_OFFSET));
     }
 
     /**
@@ -335,7 +362,7 @@ public class INode extends DataBlock {
      * @return The triple-indirect data block pointer.
      */
     public int getTripleIndirectPointer() {
-        return (this.getIntFromBytes(96, iNodeBuffer));
+        return (iNodeBuffer.getInt(TRPL_INDIRECT_OFFSET));
     }
 
     /**
@@ -343,7 +370,7 @@ public class INode extends DataBlock {
      * @return Upper 32 bit size of file in bytes.
      */
     public int getUpperFileSize() {
-        return (this.getIntFromBytes(108, iNodeBuffer));
+        return (iNodeBuffer.getInt(FILE_SIZE_UPPER_OFFSET));
     }
 
     /**
@@ -351,8 +378,7 @@ public class INode extends DataBlock {
      * @return The size of the file referenced by this iNode.
      */
     public long getTotalFileSize() {
-        long totalSize = (long) this.getUpperFileSize() << 32 | this.getLowerFileSize() & 0xFFFFFFFFL;
-        return totalSize;
+        return ( (long) this.getUpperFileSize() << 32 | this.getLowerFileSize() & 0xFFFFFFFFL );
     }
 
     /**

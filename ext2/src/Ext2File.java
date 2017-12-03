@@ -42,15 +42,17 @@ public class Ext2File extends DataBlock {
     public Ext2File(Volume vol, String filePathString) {
         super(vol);
         this.filePathString = filePathString;
+        
+        // Initialise instance variables
         this.position = 0L;
-
-        charCount = 0;
-        fileInfoList = new ArrayList<String>();
-        superBlock = vol.getSuperblock();
+        this.charCount = 0;
+        this.fileInfoList = new ArrayList<String>();
+        this.superBlock = vol.getSuperblock();
 
         // Open this new file
         this.openFile();
     }
+
 
     /********             /******** 
         ***** API METHODS *****
@@ -65,12 +67,14 @@ public class Ext2File extends DataBlock {
      * @param length The length of the file the user wishes to read in bytes.
      * @return An array of bytes relevant to the file opened.
      */
-    public byte[] read(long startByte, long length) throws NullPointerException {
+    public byte[] read(long startByte, long length) {
 
         List<Byte> dataBytesList = new ArrayList<Byte>();
 
+        // If file exists
         if (iNodeForFileToOpen != null) {
 
+            // Error checking, throw exception if necessary
             if (startByte < 0 || startByte >= iNodeForFileToOpen.getTotalFileSize()) {
                 System.out.println("----------\nCouldn't read data at that position! \n----------");
                 throw new NullPointerException();
@@ -80,6 +84,7 @@ public class Ext2File extends DataBlock {
             byte[] dataBlocksFromPointers = iNodeForFileToOpen.getDataBlocksFromPointers();
             ByteBuffer dataBlocksBuffer = ByteBuffer.wrap(dataBlocksFromPointers);
 
+            // Iterate over specified length and add bytes to dynamic list
             for (int i = (int)startByte; i < (int) length; i++) {
                 if (i >= dataBlocksBuffer.limit())
                     break;
@@ -91,6 +96,7 @@ public class Ext2File extends DataBlock {
         else
             System.out.println(this.filePathString + " - couldn't read this file.");
 
+        // Transfer bytes in dynamic list to array
         byte[] byteArray = new byte[dataBytesList.size()];
         for (int i = 0; i < byteArray.length; i++)
             byteArray[i] = dataBytesList.get(i);
@@ -137,52 +143,18 @@ public class Ext2File extends DataBlock {
         return (this.iNodeForFileToOpen != null ? this.iNodeForFileToOpen.getTotalFileSize() : 0);
     }
 
+
     /********                 /******** 
         ***** FURTHER METHODS *****
     /********                 ********/
 
-    public void printDirectoryInfo() {
-        
-        System.out.println("------------------------------------------------------------");
-        System.out.println("\033[1mDirectory Listing for " + this.filePathString + ": \033[0m\n");
-
-        // Print out directory contents of a directory
-        for (String row : this.getFileInfoList())
-            System.out.print(row);
-        System.out.println("------------------------------------------------------------");
-    }
-
-     /**
-     * Simple method to print the contents of a file in ASCII format.
-     * A string is returned containing the full file contents.
-     *
-     * @param bytes The array of bytes containing file info to be printed.
-     * @param fileName The name of the file to print.
-     * @return The string of characters in the file.
-     */
-    public void printFileContents(byte[] bytes) {
-
-        System.out.println("Length: " + bytes.length);
-
-        System.out.println(filePathString + " is " + ((isDirectory == true) ? "a directory." : "a file."));
-        String fileContentsString = "";
-        if (bytes.length == 0)
-            fileContentsString += "----------\nNo file contents for " + this.filePathString + "\n----------\n";
-        else if (!isDirectory)
-            fileContentsString += "----------\n\033[1mFile Contents for '" + filePathString + "':\033[0m\n----------\n" + new String(bytes) + "----------";
-
-        System.out.println(fileContentsString + "\n"); 
-    }
-
     /** 
      * Method which attempts to open a file specified by the user in the fileString.
      * If successful, the user will be notified the file was successfully opened.
-     *
-     * @return True if the file was successfully opened, false otherwise.
      */
     private void openFile() {
 
-        // Get directory bytes pointed to by iNode 2 direct pointer
+        // Get directory bytes pointed to by iNode 2 direct pointers
         byte[] rootDataBlocks = getDirBytes(2);
         dirDataBuffer = ByteBuffer.wrap(rootDataBlocks);    
         dirDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -256,6 +228,54 @@ public class Ext2File extends DataBlock {
     }
 
     /**
+     * Returns the list of strings for all files names in a given directory.
+     * @return The list of file name strings.
+     */
+    public List<String> getFileInfoList() {
+
+         // Print out directory contents of a directory
+        if (iNodeForFileToOpen != null && iNodeForFileToOpen.getFileModeAsString().charAt(0) == 'd') {
+            return fileInfoList;
+        }
+        // If not a directory, print contents of directory the file exists in
+        else {
+            return (new Directory(this).getFileInfo());
+        }
+    }
+
+    /**
+     * Method which prints the directory information for this file.
+     */
+    public void printDirectoryInfo() {
+        
+        System.out.println("------------------------------------------------------------");
+        System.out.println("\033[1mDirectory Listing for " + this.filePathString + ": \033[0m\n");
+
+        // Print out directory contents of a directory
+        for (String row : this.getFileInfoList())
+            System.out.print(row);
+        System.out.println("------------------------------------------------------------");
+    }
+
+     /**
+     * Simple method to print the contents of a file specified in the byte array in a regular format.
+     * @param bytes The array of bytes containing file info to be printed.
+     */
+    public void printFileContents(byte[] bytes) {
+
+        //System.out.println("Length: " + bytes.length);
+
+        System.out.println(filePathString + " is " + ((isDirectory == true) ? "a directory." : "a file."));
+        String fileContentsString = "";
+        if (bytes.length == 0)
+            fileContentsString += "----------\nNo file contents for " + this.filePathString + "\n----------\n";
+        else if (!isDirectory)
+            fileContentsString += "----------\n\033[1mFile Contents for '" + filePathString + "':\033[0m\n----------\n" + new String(bytes) + "----------";
+
+        System.out.println(fileContentsString + "\n"); 
+    }
+
+    /**
      * Returns true if this file is a directory, false otherwise.
      * @return True for directory, false for regular file.
      */
@@ -277,22 +297,5 @@ public class Ext2File extends DataBlock {
      */
     public String getNextDirectoryString() {
         return this.curDirString;
-    }
-
-    /**
-     * Returns the list of strings for all files names in a given directory.
-     * @return The list of file name strings.
-     */
-    public List<String> getFileInfoList() {
-
-         // Print out directory contents of a directory
-        if (iNodeForFileToOpen != null && iNodeForFileToOpen.getFileModeAsString().charAt(0) == 'd') {
-            return fileInfoList;
-        }
-        // If not a directory, print contents of directory the file exists in
-        else {
-            Directory fileDir = new Directory(this);
-            return fileDir.getFileInfo();
-        }
     }
 }

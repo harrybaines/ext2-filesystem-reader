@@ -47,6 +47,7 @@ public class Volume {
     /**
      * Opens a given volume given a filename into an array of bytes and returns true if successful.
      * @param filePath The file path to the volume as a string.
+     * @throws IOException if file couldn't be opened.
      * @return true if the file was successfully opened, false otherwise.
      */
     public boolean openVolume(String filePath) throws IOException {

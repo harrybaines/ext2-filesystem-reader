@@ -1,6 +1,8 @@
 package ext2;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+
 /**
  * Name: Driver
  *
@@ -29,32 +31,24 @@ public class Driver {
         h.printSuperblockInfo(vol.getSuperblock());
         h.printFurtherSuperBlockInfo(vol.getSuperblock());
 
-        byte[] byteArray = new byte[1024];
-        ByteBuffer b = vol.getByteBuffer();
-        for (int i = 0; i < 1024; i++) {
-            byteArray[i] = b.get(i + 1024);
-        }
-
-        h.dumpHexBytes(byteArray, true);
 
         /* CREATE NEW FILE INSTANCES */
         // 1. Create new file
         // 2. Print directory information
-        // 3. Read file contents
-        // 4. Display file contents
+        // 3. Read file contents + display file contents
         Ext2File root = new Ext2File(vol, "/root");
         root.printDirectoryInfo();
 
         Ext2File twoCities = new Ext2File(vol, "/two-cities");
         twoCities.printDirectoryInfo();
-        // twoCities.seek(20);
-        // byte twoCitiesBuf[] = twoCities.read(twoCities.getPosition(), twoCities.getSize());
-        // twoCities.printFileContents(twoCitiesBuf);
+        twoCities.seek(20);
+        byte twoCitiesBuf[] = twoCities.read(twoCities.getPosition(), twoCities.getSize());
+        twoCities.printFileContents(twoCitiesBuf);
 
         Ext2File deepDownFile = new Ext2File(vol, "/deep/down/in/the/filesystem/there/lived/a/file");
         deepDownFile.printDirectoryInfo();
         byte deepDownBuf[] = deepDownFile.read(0L, deepDownFile.getSize());
-        h.dumpHexBytes(deepDownBuf, true);
+        h.dumpHexBytes(deepDownBuf);
         deepDownFile.printFileContents(deepDownBuf);
 
         Ext2File dirStart = new Ext2File(vol, "/files/dir-s");
@@ -67,7 +61,7 @@ public class Driver {
         Ext2File doubleEnd = new Ext2File(vol, "/files/dbl-ind-e");
         byte doubleEndBuf[] = doubleEnd.read(0L, 21);
         doubleEnd.printFileContents(doubleEndBuf);
-        h.dumpHexBytes(doubleEndBuf, true);
+        h.dumpHexBytes(doubleEndBuf);
 
         Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
         tripleStart.printFileContents(tripleStart.read(0L, 23)); // SIZE ISSUE

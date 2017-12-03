@@ -17,9 +17,9 @@ import java.util.ArrayList;
  */
 public class Directory extends DataBlock {
 
-    private static final int INODE_LENGTH    = 4;   /* The length of an iNode in a directory listing in bytes */
-    private static final int NAME_LEN_OFFSET = 6;   /* The offset to find the namelen field in a directory listing */
-    private static final int FILENAME_OFFSET = 8;   /* The offset to find the filename in a directory listing */
+    public static final int INODE_LENGTH    = 4;    /* The length of an iNode in a directory listing in bytes */
+    public static final int NAME_LEN_OFFSET = 6;    /* The offset to find the namelen field in a directory listing */
+    public static final int FILENAME_OFFSET = 8;    /* The offset to find the filename in a directory listing */
     
     private Ext2File file;                          /* Reference to the file - would print directory contents for this file once instance is created */
 
@@ -48,18 +48,17 @@ public class Directory extends DataBlock {
      */
     public List<String> getFileInfo() {
 
-        // Create array of strings to store individual 'row' strings
-        int currentLength = 0;
-
+        // Create dynamic list of strings to store individual 'row' strings
         List<String> directoryStrings = new ArrayList<String>();
 
+        int currentLength = 0;
         while (currentLength < dirDataBuffer.limit()) {
 
             // Add next 'row' to directory string
             directoryStrings.add(this.getDirRowAsString(currentLength));
 
             // Add length to find next entry 'row'
-            currentLength += this.getShortFromBytes(currentLength + INODE_LENGTH, dirDataBuffer);
+            currentLength += dirDataBuffer.getShort(currentLength + INODE_LENGTH);
         }
         return directoryStrings;
     }
@@ -81,9 +80,9 @@ public class Directory extends DataBlock {
         users += (currentINode.getGroupID() == 0) ? "root" : Integer.toString(currentINode.getGroupID());          // Group ID of owner
 
         // Obtain file name given the filename length
-        byte[] fileNameBytes = new byte[this.getByte(offset + NAME_LEN_OFFSET,  dirDataBuffer)];
+        byte[] fileNameBytes = new byte[dirDataBuffer.get(offset + NAME_LEN_OFFSET)];
         for (int i = 0; i < fileNameBytes.length; i++)
-            fileNameBytes[i] = this.getByte(i + offset + FILENAME_OFFSET, dirDataBuffer);
+            fileNameBytes[i] = dirDataBuffer.get(i + offset + FILENAME_OFFSET);
         String filenameStr = new String(fileNameBytes);
 
         // Find the file you're supposed to search for in the current directory listing
@@ -104,7 +103,7 @@ public class Directory extends DataBlock {
      */
     public INode getINodeFromRow(int offset) {
 
-        int iNodeNumber = this.getIntFromBytes(offset, this.dirDataBuffer);
+        int iNodeNumber = dirDataBuffer.getInt(offset);
 
         int tablePointerIndex = this.getTablePointerForiNode(iNodeNumber, this.superBlock.getiNodesPerGroup(), this.superBlock.getTotaliNodes());
 

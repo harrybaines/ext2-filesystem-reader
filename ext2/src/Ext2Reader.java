@@ -1,71 +1,95 @@
 package ext2;
 
 import javax.swing.*;
-import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
 
+/**
+ * Title: Ext2Reader
+ *
+ * This class provides an implmentation of a custom GUI to read information from a given volume.
+ * The user can view various file system information and can dynamically view different directories and file contents.
+ *
+ * @author Harry Baines
+ * @see JFrame
+ */
 public class Ext2Reader extends JFrame implements ActionListener {
         
-    private Volume vol;
-    private Helper h;
+    public static final int WIDTH = 600;        /* Width of the window */
+    public static final int HEIGHT = 700;       /* Height of the window */
 
-    public static final int WIDTH = 600;
-    public static final int HEIGHT = 700;
+    private Volume vol;                         /* Reference to the volume which this reader is based */
+    private Helper h;                           /* Helper instance for dumping hex bytes */
 
-    private JButton viewDirBtn;
-    private JButton viewFileBtn;
-    private JTextField userEntry;
-    private String areaString;
-    private JTextArea textArea;
+    private JPanel mainPanel;                   /* Main content panel for window */
+    private JPanel topPanel;                    /* Top section of main panel */
+    private JPanel middlePanel;                 /* Middle section of main panel */
 
-    private JScrollPane scrollPane;
+    private JLabel titleLbl;                    /* Title of window label */
+    private JLabel entryLbl;                    /* Label for user entry */
+    private JTextField userEntry;               /* Entry box for user */
+    private JButton viewDirBtn;                 /* Button to view a directory listing */      
+    private JButton viewFileBtn;                /* Button to view file contents */
+    private JTextArea textArea;                 /* Output to view file contents and directory listings */
+    private String areaString;                  /* String containing contents to output in text area */
+    private JScrollPane scrollPane;             /* User can scroll down output if necessary */
 
-    private JMenuItem superBlockItem;
-    private JMenuItem furtherItem;
-    private JMenuItem iNodeItem;
+    private GridBagConstraints c;               /* Custom constraints for component placement */
+    
+    private JLabel bottomLbl;                   /* Name label at bottom of window */
+    private JMenuBar menuBar;                   /* Custom drop down menu bar */
+    private JMenu menu;                         /* Menu on top bar */
+    private JMenu submenu;                      /* Sub-menu on top bar */
+    private JMenuItem superBlockItem;           /* User can view super block information */
+    private JMenuItem furtherItem;              /* User can view further file system information */
+    private JMenuItem iNodeItem;                /* User can view all iNode table pointers */
+    private JMenuItem quitItem;                 /* User can quit the program */
 
-    private JMenuItem quitItem;
+    private JCheckBoxMenuItem hexAscciItem;     /* User can change output to view hex and ASCII */
+    private JMenuItem viewRootItem;             /* User can view the root directory */
+    private JMenuItem viewRootAsHexItem;        /* User can view the root directory in hex and ASCII format */
+    private JMenuItem resetItem;                /* User can reset input and output fields */
+    private boolean viewHexAscii;               /* Monitors if user is currently viewing in hex and ASCII format */
 
-    private JCheckBoxMenuItem hexAscciItem;
-    private JMenuItem viewRootItem;
-    private JMenuItem viewRootAsHexItem;
-    private JMenuItem resetItem;
-
-    private boolean viewHexAscii;
-
+    /**
+     * Constructor to initialise all the components on the UI and present the window to the user.
+     * @param vol The reference to the volume upon which this frame will read data.
+     */
     public Ext2Reader(Volume vol) {
 
+        // Initialise instance variables
         this.vol = vol;
         this.viewHexAscii = false;
         this.h = new Helper();
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
-
-        JPanel topPanel = new JPanel(new GridLayout(5,1,2,2));
+        // Initialise panels
+        mainPanel = new JPanel(new BorderLayout());
+        topPanel = new JPanel(new GridLayout(5,1,2,2));
         topPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 10, 10));
 
-        JPanel middlePanel = new JPanel(new GridBagLayout());
+        middlePanel = new JPanel(new GridBagLayout());
         middlePanel.setBorder(BorderFactory.createEmptyBorder(5, 20, 0, 10));
 
         mainPanel.add("Center", topPanel);
         mainPanel.add("South", middlePanel);
 
-        JLabel titleLbl = new JLabel("Ext2 FileSystem Reader", SwingConstants.CENTER);
+        // Initialise components
+        titleLbl = new JLabel("Ext2 FileSystem Reader", SwingConstants.CENTER);
         titleLbl.setForeground(Color.BLUE);
         titleLbl.setFont(new Font("Serif", Font.ITALIC, 30));
         topPanel.add(titleLbl);
 
         // Middle panel - user entry area
-        JLabel entryLbl = new JLabel("Enter the pathname for the file below:", SwingConstants.CENTER);
+        entryLbl = new JLabel("Enter the pathname for the file below:", SwingConstants.CENTER);
         entryLbl.setFont(new Font("Serif", Font.BOLD, 20));
         topPanel.add(entryLbl);
         
         userEntry = new JTextField(10);
         userEntry.setHorizontalAlignment(SwingConstants.CENTER);
-        userEntry.setFont(new Font("Serif", Font.BOLD, 25));
+        userEntry.setFont(new Font("Helvetica", Font.PLAIN, 24));
         topPanel.add(userEntry);
 
+        // Output area
         viewDirBtn = new JButton("View Directory");
         viewDirBtn.setFont(new Font("Arial Narrow", Font.BOLD, 16));
         viewDirBtn.addActionListener(this);
@@ -84,7 +108,8 @@ public class Ext2Reader extends JFrame implements ActionListener {
         textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         scrollPane = new JScrollPane(textArea);
 
-        GridBagConstraints c = new GridBagConstraints();
+        // Custom component placement
+        c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 0;
         c.gridy = 2;
@@ -94,7 +119,7 @@ public class Ext2Reader extends JFrame implements ActionListener {
         middlePanel.add(scrollPane, c);
 
         // Bottom panel
-        JLabel bottomLbl = new JLabel("SCC.211 Harry Baines 2017", SwingConstants.CENTER);
+        bottomLbl = new JLabel("SCC.211 Harry Baines 2017", SwingConstants.CENTER);
         bottomLbl.setFont(new Font("Serif", Font.ITALIC, 14));
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 0;
@@ -103,13 +128,13 @@ public class Ext2Reader extends JFrame implements ActionListener {
         c.insets = new Insets(10,10,10,10);
         middlePanel.add(bottomLbl, c);
 
-        // Menu bar
-        JMenuBar menuBar = new JMenuBar();
-        JMenu menu = new JMenu("File");
+        // Menu bar - file menu
+        menuBar = new JMenuBar();
+        menu = new JMenu("File");
         menuBar.add(menu);
 
-        // Submenu
-        JMenu submenu = new JMenu("Ext2 Info");
+        // Submenu in file menu
+        submenu = new JMenu("Ext2 Info");
         superBlockItem = new JMenuItem(new Action("SuperBlock"));
         furtherItem = new JMenuItem(new Action("Further Information"));
         iNodeItem = new JMenuItem(new Action("iNode Table Pointers"));
@@ -117,11 +142,11 @@ public class Ext2Reader extends JFrame implements ActionListener {
         submenu.add(furtherItem);
         submenu.add(iNodeItem);
         menu.add(submenu);
-
         menu.addSeparator();
         quitItem = new JMenuItem(new Action("Quit"));
         menu.add(quitItem);
 
+        // View menu
         menu = new JMenu("View");
         hexAscciItem = new JCheckBoxMenuItem(new Action("View File Contents As Hex/ASCII"));
         menu.add(hexAscciItem);
@@ -151,14 +176,23 @@ public class Ext2Reader extends JFrame implements ActionListener {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
+    /**
+     * Called when a UI component is clicked.
+     * @param e The action event recorded.
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
 
+        // Reset entry fields
         textArea.selectAll();
         textArea.replaceSelection("");
+
+        // View a directory based on user entry
         if (e.getSource() == viewDirBtn) {
             this.createNewFile(userEntry.getText(), true, viewHexAscii);
         }
+
+        // View file contents
         else if (e.getSource() == viewFileBtn) {
             if (userEntry.getText().equals("/") && viewHexAscii) 
                 this.createNewFile(userEntry.getText(), false, true);
@@ -168,13 +202,25 @@ public class Ext2Reader extends JFrame implements ActionListener {
         textArea.setCaretPosition(0);
     }
 
+    /**
+     * Method to append the file information specified in the user entry field, to the output.
+     * The user can choose to view a directory or the contents of the file they specified.
+     * Also, the user can view the output in a regular format or in hex and ASCII format.
+     *
+     * @param filePath The path to the file the user entered.
+     * @param clickedDirectory Monitors whether the user wants to view directory contents.
+     * @param viewHexAscii Specifies output type.
+     */
     public void createNewFile(String filePath, boolean clickedDirectory, boolean viewHexAscii) {
 
         if (filePath.equals("") || filePath.charAt(0) != '/')
             JOptionPane.showMessageDialog(null, "Please enter a valid path.", "Entry Error", JOptionPane.ERROR_MESSAGE);
         else {
+
+            // Create new file instance if file path is valid
             Ext2File fileChosen = new Ext2File(vol, filePath);
             if (clickedDirectory) {
+                // Append directory listing to output
                 for (String s : fileChosen.getFileInfoList())
                     textArea.append(s);
             }
@@ -182,9 +228,11 @@ public class Ext2Reader extends JFrame implements ActionListener {
                 if (fileChosen.isDirectory() && !viewHexAscii)
                     JOptionPane.showMessageDialog(null, "Can't view file contents, this is a directory. Try viewing as hex and ASCII.", "File Content Error", JOptionPane.ERROR_MESSAGE);
                 else {
+
+                    // Read file contents
                     byte fileBuf[] = fileChosen.read(0L, fileChosen.getSize());
 
-                    // View file contents as hex and ASCII
+                    // View file contents as hex and ASCII if specified
                     if (viewHexAscii) {
                         if (fileChosen.isDirectory() || filePath.equals("/"))
                             areaString = h.getHexBytesString(fileChosen.getDirDataBuffer().array());
@@ -204,12 +252,28 @@ public class Ext2Reader extends JFrame implements ActionListener {
         }
     }
 
+    /**
+     * Title: Action
+     *
+     * This inner class provides a simple implementation for detecting UI clicks in the menu bar.
+     *
+     * @author Harry Baines
+     * @see AbstractAction
+     */
     private class Action extends AbstractAction {
 
+        /**
+         * Constructor to initialise an action with a name.
+         * @param name The name of tha action.
+         */
         public Action(String name) {
             super(name);
         }
 
+        /**
+         * Called when a UI component is clicked under this action.
+         * @param e The action event recorded.
+         */
         @Override
         public void actionPerformed(ActionEvent e) {
 

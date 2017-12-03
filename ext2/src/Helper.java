@@ -29,15 +29,14 @@ public class Helper {
      * 
      * @param bytes The array of bytes to output in hex format.
      */
-    public void dumpHexBytes(byte[] bytes, boolean print) {
+    public void dumpHexBytes(byte[] bytes) {
                 
         int count = 0;
         int byteCount = 0;
         int asciiCount = 0;
         this.hexBytesString = "";
 
-        System.out.println("\n----------\n\033[1mByte Count: " + bytes.length + "\033[0m");
-        System.out.println("----------");
+        System.out.println("\n----------\n\033[1mByte Count: " + bytes.length + "\033[0m\n----------");
         
         // Iterate over all the bytes in the array
         while (count < bytes.length) {
@@ -71,7 +70,7 @@ public class Helper {
                     asciiString += " ";
                 else {
                     // Obtain ASCII equivalent of given byte in array
-                    int asciiInt = bytes[(count-16) + i] & 0xFFFF;
+                    int asciiInt = bytes[(count-16) + i];
                     asciiString += (asciiInt >= 32 && asciiInt < 127) ? (char) asciiInt : "_";                    
                 }
 
@@ -82,13 +81,10 @@ public class Helper {
 
             asciiString += "\n";
             hexBytesString += hexString + asciiString;
-
-            if (print)
-                System.out.print(hexString + asciiString);
+            
+            System.out.print(hexString + asciiString);
         }
-
-        if (print)
-            System.out.println("----------\n");
+        System.out.println("----------\n");
     }
 
     /**
@@ -100,18 +96,6 @@ public class Helper {
         for (int i : pointers)
            System.out.println("pointer: " + i);
         System.out.println("----------\n");
-    }
-
-    /**
-     * Returns the string containing all the bytes specified by the user.
-     * This method obtains the byte string without printing to the console.
-     *
-     * @param bytes The array of bytes to generate a string for.
-     * @return The string containing all the bytes provided in the array.
-     */
-    public String getHexBytesString(byte[] bytes) {
-        this.dumpHexBytes(bytes, false);
-        return this.hexBytesString;
     }
 
     /** 
@@ -156,5 +140,17 @@ public class Helper {
         System.out.println("Group ID of owner:                      "   + iNode.getGroupID());
         System.out.println("Number of hard links referencing file:  "   + iNode.getNumHardLinks());
         System.out.println("----------\n");
+    }
+
+    /**
+     * Returns the string containing all the bytes specified by the user.
+     * This method obtains the byte string without printing to the console.
+     *
+     * @param bytes The array of bytes to generate a string for.
+     * @return The string containing all the bytes provided in the array.
+     */
+    public String getHexBytesString(byte[] bytes) {
+        this.dumpHexBytes(bytes);
+        return this.hexBytesString;
     }
 }

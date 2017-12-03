@@ -45,6 +45,6 @@ public class GroupDescriptor extends DataBlock {
 	 */
 	public int getINodeTblPointer() {
 		int pointerPos = INODE_TBL_POINTER_OFFSET + (this.groupNum * GROUP_DESCRIPTOR_SIZE); 
-		return (this.getIntFromBytes(pointerPos, this.groupDescBuffer));
+		return (this.groupDescBuffer.getInt(pointerPos));
 	}
 }

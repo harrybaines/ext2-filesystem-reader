@@ -38,7 +38,7 @@ public abstract class DataBlock {
 
         // Read specified portion of bytes from volume byte buffer
         for (int curByte = 0; curByte < byteBuffer.limit(); curByte++) {
-            byteBuffer.put(this.getByte((int) startByte, this.vol.getByteBuffer()));
+            byteBuffer.put(this.vol.getByteBuffer().get((int) startByte));
             startByte++;
         }
 
@@ -63,30 +63,6 @@ public abstract class DataBlock {
             tableIndex++;
         }
         return tableIndex;
-    }
-
-    /** CHANGE
-     * Method to obtain an unsigned byte from a signed 2s complement signed byte from the byte buffer.
-     * @return Unsigned byte.
-     */
-    public byte getByte(int i, ByteBuffer b) {
-        return (b.get(i));
-    }
-
-    /**
-     * Method to obtain an unsigned short from a signed 2s complement integer (byte) from the byte buffer.
-     * @return Unsigned integer value.
-     */
-    public short getShortFromBytes(int i, ByteBuffer b) {
-        return (b.getShort(i));
-    }
-
-    /**
-     * Method to obtain an unsigned integer from a signed 2s complement integer (byte) from the byte buffer.
-     * @return Unsigned integer value.
-     */
-    public int getIntFromBytes(int i, ByteBuffer b) {
-        return (b.getInt(i));
     }
 
     /** 
