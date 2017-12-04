@@ -55,6 +55,13 @@ public class Driver {
         dirStart.printDirectoryInfo();
         dirStart.printFileContents(dirStart.read(0L, dirStart.getSize()));
 
+        Ext2File dirEnd = new Ext2File(vol, "/files/dir-e");
+        dirEnd.printDirectoryInfo();
+        dirEnd.printFileContents(dirEnd.read(0L, dirEnd.getSize()));
+
+        Ext2File indStart = new Ext2File(vol, "/files/ind-s");
+        indStart.printFileContents(indStart.read(0L, indStart.getSize()));
+
         Ext2File indEnd = new Ext2File(vol, "/files/ind-e");
         indEnd.printFileContents(indEnd.read(0L, indEnd.getSize()));
 

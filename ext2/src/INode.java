@@ -51,6 +51,8 @@ public class INode extends DataBlock {
     private int groupNum;                                   /* The group number this iNode belongs in */
     private int iNodeNumber;                                /* The number for this iNode */
     private int iNodeOffset;                                /* The offset, in bytes, that the iNode is at in the filsystem */
+    private int levelToReach;
+    private List<Integer> blockPointers;
 
     /**
      * Constructor to initialise an iNode with the relevant fields.
@@ -86,6 +88,8 @@ public class INode extends DataBlock {
 
     /**
      * Retrieves an array of bytes referenced by the direct pointers in this iNode.
+     * If the indirection pointer fields are not empty, a recursive method is called to obtain data block pointers.
+     *
      * @return Array of bytes for the data blocks being pointed to.
      */
     public byte[] getDataBlocksFromPointers() {
@@ -131,8 +135,13 @@ public class INode extends DataBlock {
      */
     private void addDataBlocksForInitialPointer(int indirectPointer, int indLevel, List<Byte> allDataBlocks) {
 
+        this.levelToReach = indLevel;
+
+        // Stores all pointers found that aren't 0
+        blockPointers = new ArrayList<Integer>();
+
         // Obtains all non-0 pointers from 'indLevel' levels of indirection, given an initial indirect pointer 
-        List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(indLevel, this.getIndirectBlockPointers(indirectPointer));
+        List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(1, this.getIndirectBlockPointers(indirectPointer));
 
         // Transfer all found data from indirect pointers into 'master' list
         for (byte b : this.getDataBlocks(pointersFromIndirectionLevel))
@@ -140,8 +149,8 @@ public class INode extends DataBlock {
     }
 
     /**
-     * Method to traverse the file system given the level of indirection to traverse.
-     * The method is given an initial list of indirection pointers to begin the traversal.
+     * Method to traverse the file system given the an initial level of indirection.
+     * This method is recursive and is given an initial list of indirection pointers to begin the traversal.
      *
      * @param indirectionLevel The levels of indirection to traverse.
      * @param indirectTableBlockPointers The initial dynamic list of pointers to begin traversal.
@@ -149,30 +158,21 @@ public class INode extends DataBlock {
      */
     private List<Integer> getPointersByIndirectionLevel(int indirectionLevel, List<Integer> indirectTableBlockPointers) {
 
-        // Stores all pointers found that aren't 0
-        List<Integer> blockPointers = new ArrayList<Integer>();
+        // Iterate over block of pointers at given level of recursion
+        for (int p : indirectTableBlockPointers) {
 
-        // Iterate over first block of pointers
-        for (int i : indirectTableBlockPointers) {
-            if (i != 0) {
-                if (indirectionLevel == 1)
-                    blockPointers.add(i);
-                else {
-                    // Iterate over 2nd block of pointers (level 2) and get all pointers in the block each one points to
-                    for (int j : this.getIndirectBlockPointers(i)) {
-                        if (j != 0) {
-                            // Add data to list if at level 2, otherwise ignore
-                            if (indirectionLevel == 2)
-                                blockPointers.add(j);
-                            else {
-                                // Iterate over final block of pointers (level 3)
-                                for (int k : this.getIndirectBlockPointers(j))
-                                    if (k != 0)
-                                        blockPointers.add(k);
-                            }
-                        }
-                    }
-                }
+            // If pointer points to data
+            if (p != 0) {
+
+                indirectionLevel++;
+
+                // Add data block pointer to final list
+                if (indirectionLevel > levelToReach) 
+                    blockPointers.add(p);
+
+                // Recurse until final indirection level is met
+                else
+                    getPointersByIndirectionLevel(indirectionLevel, this.getIndirectBlockPointers(p));
             }   
         }
         return blockPointers;
