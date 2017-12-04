@@ -17,11 +17,13 @@ import java.nio.ByteOrder;
  */
 public class Volume {
     
-    private RandomAccessFile file;      /* The file that represents the volume the user wishes to open */
-    private byte[] fileInBytes;         /* Array of bytes to store the entire volume */
-    private ByteBuffer byteBuffer;      /* Byte buffer to store all bytes in this volume */
-    private SuperBlock superBlock;      /* Super block reference containing all info about the file system in this volume */
-    private int[] iNodeTablePointers;   /* Array of all the iNode table pointers - the super block fields aid in it's construction */
+    private RandomAccessFile file;                /* The file that represents the volume the user wishes to open */
+    private byte[] fileInBytes;                   /* Array of bytes to store the entire volume */
+    private ByteBuffer byteBuffer;                /* Byte buffer to store all bytes in this volume */
+    private SuperBlock superBlock;                /* Super block reference containing all info about the file system in this volume */
+    
+    private GroupDescriptor[] groupDescriptors;   /* Array of all group descriptors in this volume */
+    private int[] iNodeTablePointers;             /* Array of all the iNode table pointers - the super block fields aid in it's construction */
 
     /** 
      * Constructor used to open a file given a file path to that file.
@@ -99,13 +101,23 @@ public class Volume {
         groupDescBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
         int currentDesc = 0;
+        groupDescriptors = new GroupDescriptor[numBlockGroups];
 
         // Create new GroupDescriptor instances to obtain iNode table pointers
         while (currentDesc < numBlockGroups) {
-            iNodeTablePointers[currentDesc] = new GroupDescriptor(groupDescBuffer, currentDesc, this.superBlock).getINodeTblPointer();
+            groupDescriptors[currentDesc] = new GroupDescriptor(groupDescBuffer, currentDesc, this.superBlock);
+            iNodeTablePointers[currentDesc] = groupDescriptors[currentDesc].getINodeTblPointer();
             currentDesc++;
         }
         return iNodeTablePointers;
+    }
+
+    /**
+     * Obtains the list of all group descriptors in this volume.
+     * @return List of group descriptors.
+     */
+    public GroupDescriptor[] getGroupDescriptors() {
+        return this.groupDescriptors;
     }
 
     /**

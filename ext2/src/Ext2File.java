@@ -86,25 +86,12 @@ public class Ext2File extends DataBlock {
             byte[] dataBlocksFromPointers = iNodeForFileToOpen.getDataBlocksFromPointers();
             ByteBuffer dataBlocksBuffer = ByteBuffer.wrap(dataBlocksFromPointers);
 
-            // Iterate over specified length and add bytes to dynamic list
-            // for (int i = (int)startByte; i < (int) length; i++) {
-            //     if (i >= dataBlocksBuffer.limit())
-            //         break;
-            //     if (dataBlocksBuffer.get(i) != 0)                   // SORT OUT - HOLES IN FILES - SEE PDF
-            //         dataBytesList.add(dataBlocksBuffer.get(i));
-            //     this.position++;
-            // }
+            // Transfer all bytes to array to return
             byteArray = new byte[dataBlocksBuffer.remaining()];
             dataBlocksBuffer.get(byteArray);
         }
         else
-            System.out.println(this.filePathString + " - couldn't read this file.");
-
-        // Transfer bytes in dynamic list to array
-        // byte[] byteArray = new byte[dataBytesList.size()];
-        // for (int i = 0; i < byteArray.length; i++)
-        //     byteArray[i] = dataBytesList.get(i);
-
+            System.out.println(this.filePathString + " - couldn't read this file - either a directory or doesn't exist.");
 
         return byteArray;
     }
@@ -293,6 +280,14 @@ public class Ext2File extends DataBlock {
      */
     public ByteBuffer getDirDataBuffer() {
         return this.dirDataBuffer;
+    }
+
+    /**
+     * Returns the iNode that points to this file.
+     * @return iNode for this file.
+     */
+    public INode getiNodeForFileToOpen() {
+        return this.iNodeForFileToOpen;
     }
 
     /**
