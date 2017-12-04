@@ -71,6 +71,8 @@ public class Ext2File extends DataBlock {
 
         List<Byte> dataBytesList = new ArrayList<Byte>();
 
+        byte[] byteArray = new byte[0];
+
         // If file exists
         if (iNodeForFileToOpen != null) {
 
@@ -85,21 +87,24 @@ public class Ext2File extends DataBlock {
             ByteBuffer dataBlocksBuffer = ByteBuffer.wrap(dataBlocksFromPointers);
 
             // Iterate over specified length and add bytes to dynamic list
-            for (int i = (int)startByte; i < (int) length; i++) {
-                if (i >= dataBlocksBuffer.limit())
-                    break;
-                if (dataBlocksBuffer.get(i) != 0)                   // SORT OUT - HOLES IN FILES - SEE PDF
-                    dataBytesList.add(dataBlocksBuffer.get(i));
-                this.position++;
-            }
+            // for (int i = (int)startByte; i < (int) length; i++) {
+            //     if (i >= dataBlocksBuffer.limit())
+            //         break;
+            //     if (dataBlocksBuffer.get(i) != 0)                   // SORT OUT - HOLES IN FILES - SEE PDF
+            //         dataBytesList.add(dataBlocksBuffer.get(i));
+            //     this.position++;
+            // }
+            byteArray = new byte[dataBlocksBuffer.remaining()];
+            dataBlocksBuffer.get(byteArray);
         }
         else
             System.out.println(this.filePathString + " - couldn't read this file.");
 
         // Transfer bytes in dynamic list to array
-        byte[] byteArray = new byte[dataBytesList.size()];
-        for (int i = 0; i < byteArray.length; i++)
-            byteArray[i] = dataBytesList.get(i);
+        // byte[] byteArray = new byte[dataBytesList.size()];
+        // for (int i = 0; i < byteArray.length; i++)
+        //     byteArray[i] = dataBytesList.get(i);
+
 
         return byteArray;
     }
@@ -192,8 +197,8 @@ public class Ext2File extends DataBlock {
     private byte[] getDirBytes(int iNodeNumber) {
 
         // Obtains all bytes relevant to a given
-        int tablePointerIndex = getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
-        INode iNode = new INode(iNodeNumber, superBlock.getiNodeTablePointers()[tablePointerIndex], tablePointerIndex, superBlock);
+        int tablePointerIndex = this.getVolume().getTablePointerForiNode(iNodeNumber, superBlock.getiNodesPerGroup(), superBlock.getTotaliNodes());
+        INode iNode = new INode(iNodeNumber, this.getVolume().getiNodeTablePointers()[tablePointerIndex], tablePointerIndex, superBlock);
         return iNode.getDataBlocksFromPointers();
     }
 
@@ -234,13 +239,12 @@ public class Ext2File extends DataBlock {
     public List<String> getFileInfoList() {
 
          // Print out directory contents of a directory
-        if (iNodeForFileToOpen != null && iNodeForFileToOpen.getFileModeAsString().charAt(0) == 'd') {
+        if (iNodeForFileToOpen != null && iNodeForFileToOpen.getFileModeAsString().charAt(0) == 'd')
             return fileInfoList;
-        }
-        // If not a directory, print contents of directory the file exists in
-        else {
+
+        // If not a directory, print contents of directory this file exists in
+        else
             return (new Directory(this).getFileInfo());
-        }
     }
 
     /**

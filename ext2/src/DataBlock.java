@@ -45,26 +45,6 @@ public abstract class DataBlock {
         return byteBuffer.array();
     }
 
-    /**
-     * Method to obtain the group number the iNode belongs to and the index in the array of iNode table pointers.
-     * The correct iNode table pointer can then be used to find the iNode required.
-     * E.g. A table index of 2 indicates the iNode exists in block group 2 and index 2 of the iNode table pointers is the table pointer to use.
-     *
-     * @param iNodeNumber The iNode number.
-     * @param iNodesPerGroup The total number of iNodes per group.
-     * @param totaliNodes The total number of iNodes in the filesystem.
-     * @return The table index (group number and index in array of iNode table pointers).
-     */
-    public int getTablePointerForiNode(int iNodeNumber, int iNodesPerGroup, int totaliNodes) {
-        int tableIndex = 0;
-        for (int i = iNodesPerGroup; i <= totaliNodes; i += iNodesPerGroup) {
-            if (iNodeNumber <= i)
-                break;
-            tableIndex++;
-        }
-        return tableIndex;
-    }
-
     /** 
      * Returns the volume that this data block is located in.
      * @return The volume instance.

@@ -174,6 +174,10 @@ public class Ext2Reader extends JFrame implements ActionListener {
         this.setResizable(false);
         this.setVisible(true);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Display root upon load
+        viewRootItem.doClick();
+        this.requestFocusInWindow();
     }
 
     /**
@@ -200,6 +204,7 @@ public class Ext2Reader extends JFrame implements ActionListener {
                 this.createNewFile(userEntry.getText(), false, viewHexAscii);
         }
         textArea.setCaretPosition(0);
+        this.requestFocusInWindow();
     }
 
     /**
@@ -234,8 +239,9 @@ public class Ext2Reader extends JFrame implements ActionListener {
 
                     // View file contents as hex and ASCII if specified
                     if (viewHexAscii) {
-                        if (fileChosen.isDirectory() || filePath.equals("/"))
+                        if (fileChosen.isDirectory() || filePath.equals("/")) {
                             areaString = h.getHexBytesString(fileChosen.getDirDataBuffer().array());
+                        }
                         else
                             areaString = h.getHexBytesString(fileBuf);
                         textArea.append(areaString);
@@ -244,8 +250,13 @@ public class Ext2Reader extends JFrame implements ActionListener {
 
                     // View regular file contents
                     else {
-                        areaString = new String(fileBuf);
-                        textArea.append(areaString);
+                        String stringToPrint = "";
+                        
+                        for (int i = 0; i < fileBuf.length; i++)
+                            if (fileBuf[i] != 0)
+                                stringToPrint += (char) fileBuf[i];
+
+                        textArea.append(new String(stringToPrint));
                     }   
                 }
             }
@@ -294,7 +305,7 @@ public class Ext2Reader extends JFrame implements ActionListener {
             // View iNode table pointers
             else if (e.getSource() == iNodeItem) {
                 String pointersString = "";
-                int[] pointers = Ext2Reader.this.vol.getSuperblock().getiNodeTablePointers();
+                int[] pointers = Ext2Reader.this.vol.getiNodeTablePointers();
 
                 for (int i = 0; i < pointers.length; i++)
                     pointersString += "iNode Table Pointer " + i + ": Block " + Integer.toString(pointers[i]) + "\n";

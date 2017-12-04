@@ -56,7 +56,6 @@ public class Driver {
         dirStart.printFileContents(dirStart.read(0L, dirStart.getSize()));
 
         Ext2File dirEnd = new Ext2File(vol, "/files/dir-e");
-        dirEnd.printDirectoryInfo();
         dirEnd.printFileContents(dirEnd.read(0L, dirEnd.getSize()));
 
         Ext2File indStart = new Ext2File(vol, "/files/ind-s");
@@ -65,18 +64,19 @@ public class Driver {
         Ext2File indEnd = new Ext2File(vol, "/files/ind-e");
         indEnd.printFileContents(indEnd.read(0L, indEnd.getSize()));
 
+        Ext2File doubleStart = new Ext2File(vol, "/files/dbl-ind-s");
+        byte doubleStartBuf[] = doubleStart.read(0L, doubleStart.getSize());
+        h.dumpHexBytes(doubleStartBuf);
+
         Ext2File doubleEnd = new Ext2File(vol, "/files/dbl-ind-e");
-        byte doubleEndBuf[] = doubleEnd.read(0L, 21);
-        doubleEnd.printFileContents(doubleEndBuf);
+        byte doubleEndBuf[] = doubleEnd.read(0L, doubleEnd.getSize());
         h.dumpHexBytes(doubleEndBuf);
 
         Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
-        tripleStart.printFileContents(tripleStart.read(0L, 23)); // SIZE ISSUE
+        tripleStart.printFileContents(tripleStart.read(0L, tripleStart.getSize()));
 
         Ext2File tripleEnd = new Ext2File(vol, "/files/trpl-ind-e");
-        tripleEnd.printFileContents(tripleEnd.read(0L, 20));
-
-        Ext2File bigDir = new Ext2File(vol, "/big-dir");
+        tripleEnd.printFileContents(tripleEnd.read(0L, tripleEnd.getSize()));
 
         System.out.println("Time to open all files: " + (System.currentTimeMillis() - startTime) + "ms\n");
 

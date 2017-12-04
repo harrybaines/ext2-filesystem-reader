@@ -72,7 +72,7 @@ public class Directory extends DataBlock {
     public String getDirRowAsString(int offset) {
 
         // Obtain iNode information at current row
-        INode currentINode = getINodeFromRow(offset);
+        INode currentINode = this.getINodeFromRow(offset);
 
         // Obtain user ID (root etc.)
         String users = "";
@@ -105,9 +105,9 @@ public class Directory extends DataBlock {
 
         int iNodeNumber = dirDataBuffer.getInt(offset);
 
-        int tablePointerIndex = this.getTablePointerForiNode(iNodeNumber, this.superBlock.getiNodesPerGroup(), this.superBlock.getTotaliNodes());
+        int tablePointerIndex = this.getVolume().getTablePointerForiNode(iNodeNumber, this.superBlock.getiNodesPerGroup(), this.superBlock.getTotaliNodes());
 
-        return (new INode(iNodeNumber, this.superBlock.getiNodeTablePointers()[tablePointerIndex], tablePointerIndex, this.superBlock));
+        return (new INode(iNodeNumber, this.getVolume().getiNodeTablePointers()[tablePointerIndex], tablePointerIndex, this.superBlock));
     }
 
     /**

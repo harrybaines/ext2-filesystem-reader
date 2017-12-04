@@ -34,7 +34,6 @@ public class SuperBlock extends DataBlock {
     private String volumeLbl;                                 /* The volume label relevant to this file system, as a string */
 
     private ByteBuffer byteBuffer;                            /* Byte buffer reference for setting super block values */
-    private int[] iNodeTablePointers;                         /* Array of all the iNode table pointers - the super block fields aid in it's construction */
 
     /**
      * Constructor to initialise a super block in a given volume.
@@ -44,9 +43,8 @@ public class SuperBlock extends DataBlock {
         super(vol);
         this.byteBuffer = this.getVolume().getByteBuffer();
         this.setSuperblockValues();
-        this.iNodeTablePointers = this.getAllINodeTblPointers();
     }
-
+    
     /**
      * Obtains all the superblock fields using block group 0.
      * Each superblock field can then be accessed when required using relevant accessor methods.
@@ -66,35 +64,6 @@ public class SuperBlock extends DataBlock {
         // Initialise volume label
         for (int i = 0; i < 16; i++)
             this.volumeLbl += (char) this.byteBuffer.get(this.blockSize + VOLUME_LBL_OFFSET + i);
-    }
-
-    /**
-     * Retrieves an array of all iNode table pointers from the group descriptors.
-     * The method uses block group 0 to access all group descriptors and uses relevant fields in this class to find the pointers.
-     *
-     * @return The array of all integer iNode table pointers.
-     */
-    private int[] getAllINodeTblPointers() {
-
-        // Obtains array of iNode table pointers from all group descriptors
-        int numBlockGroups = (int) Math.ceil((double) this.totalBlocks / (double) this.blocksPerGroup);
-
-        // Array of iNode table pointers
-        int[] iNodeTablePointers = new int[numBlockGroups];
-
-        // Finds the group descriptors using block group 0 (1024 bytes after superblock)
-        byte[] groupDescBytes = this.readBlock(2 * this.getBlockSize(), numBlockGroups * GroupDescriptor.GROUP_DESCRIPTOR_SIZE);
-        ByteBuffer groupDescBuffer = ByteBuffer.wrap(groupDescBytes);
-        groupDescBuffer.order(ByteOrder.LITTLE_ENDIAN);
-
-        int currentDesc = 0;
-
-        // Create new GroupDescriptor instances to obtain iNode table pointers
-        while (currentDesc < numBlockGroups) {
-            iNodeTablePointers[currentDesc] = new GroupDescriptor(groupDescBuffer, currentDesc, this).getINodeTblPointer();
-            currentDesc++;
-        }
-        return iNodeTablePointers;
     }
 
     /**
@@ -126,14 +95,6 @@ public class SuperBlock extends DataBlock {
         furtherInfo += "Number of group descriptors: " + (int) Math.ceil((double)this.getTotalBlocks() / this.getBlocksPerGroup()) + "\n";
         furtherInfo += "Total volume size (bytes):   " + this.getTotalBlocks() * this.getBlockSize() + "\n";
         return furtherInfo;
-    }
-
-    /**
-     * Obtains the list of all iNode table pointers found in the group descriptors.
-     * @return List of iNode table pointers.
-     */
-    public int[] getiNodeTablePointers() {
-        return this.iNodeTablePointers;
     }
 
     /**

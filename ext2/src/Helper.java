@@ -71,7 +71,7 @@ public class Helper {
                 else {
                     // Obtain ASCII equivalent of given byte in array
                     int asciiInt = bytes[(count-16) + i];
-                    asciiString += (asciiInt >= 32 && asciiInt < 127) ? (char) asciiInt : "_";                    
+                    asciiString += (asciiInt >= 32 && asciiInt < 127) ? (char) asciiInt : ".";                    
                 }
 
                 if (i == 7 || i == 15)

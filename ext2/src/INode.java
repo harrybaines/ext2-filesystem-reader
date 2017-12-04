@@ -51,8 +51,8 @@ public class INode extends DataBlock {
     private int groupNum;                                   /* The group number this iNode belongs in */
     private int iNodeNumber;                                /* The number for this iNode */
     private int iNodeOffset;                                /* The offset, in bytes, that the iNode is at in the filsystem */
-    private int levelToReach;
-    private List<Integer> blockPointers;
+    private int levelToReach;                               /* Final level of indirection to reach to obtain data block pointers */
+    private List<Integer> blockPointers;                    /* Dynamic list of final data block pointers */
 
     /**
      * Constructor to initialise an iNode with the relevant fields.
@@ -71,9 +71,7 @@ public class INode extends DataBlock {
         this.iNodeTblPointer = iNodeTblPointer;
         this.groupNum = groupNum;
         this.superBlock = superBlock;
-
-        // Work out where iNode is in the file system (offset)
-        iNodeOffset = (iNodeTblPointer * superBlock.getBlockSize()) + (((iNodeNumber-1) - (groupNum * superBlock.getiNodesPerGroup())) * superBlock.getiNodeSize());
+        this.iNodeOffset = this.calculateiNodeByteOffset(iNodeTblPointer, iNodeNumber, groupNum);
 
         // Create array of bytes for this iNode
         iNodeBytes = this.readBlock(iNodeOffset, superBlock.getiNodeSize());
@@ -84,6 +82,18 @@ public class INode extends DataBlock {
 
         // Set the indirect block size
         indirectBlockSize = superBlock.getBlockSize() / Integer.BYTES;
+    }
+
+    /**
+     * Method to calculate the offset in bytes where the iNode is located in the filesystem.
+     *
+     * @param iNodeTblPointer The pointer to the iNode table in which this iNode belongs.
+     * @param iNodeNumber The number of this iNode.
+     * @param groupNum The block group in which this iNode belongs.
+     * @return The offset in bytes in the filesystem for this iNode.
+     */
+    public int calculateiNodeByteOffset(int iNodeTblPointer, int iNodeNumber, int groupNum) {
+        return ((iNodeTblPointer * superBlock.getBlockSize()) + (((iNodeNumber-1) - (groupNum * superBlock.getiNodesPerGroup())) * superBlock.getiNodeSize()));
     }
 
     /**
@@ -120,7 +130,6 @@ public class INode extends DataBlock {
         byte[] byteArray = new byte[allDataBlocks.size()];
         for (int i = 0; i < allDataBlocks.size(); i++)
             byteArray[i] = allDataBlocks.get(i);
-
         return byteArray;
     }
 
@@ -145,7 +154,8 @@ public class INode extends DataBlock {
 
         // Transfer all found data from indirect pointers into 'master' list
         for (byte b : this.getDataBlocks(pointersFromIndirectionLevel))
-            allDataBlocks.add(b);
+            if (b != 0)
+                allDataBlocks.add(b);
     }
 
     /**
@@ -193,8 +203,9 @@ public class INode extends DataBlock {
         for (int i : pointers) {
             if (i != 0) {
                 byte[] dataBlocksArray = this.readBlock(i * superBlock.getBlockSize(), superBlock.getBlockSize());
-                for (int curBlock = 0; curBlock < dataBlocksArray.length; curBlock++)
-                    byteList.add(dataBlocksArray[curBlock]);
+                for (int curByte = 0; curByte < dataBlocksArray.length; curByte++) {
+                    byteList.add(dataBlocksArray[curByte]);
+                }
             }
         }
         return byteList;
@@ -208,6 +219,7 @@ public class INode extends DataBlock {
 
         List<Integer> directPointers = new ArrayList<Integer>();
 
+        // Transfer direct pointers to dynamic list
         int count = 0;
         while (count < 12) {
             directPointers.add(iNodeBuffer.getInt(DIRECT_POINTERS_OFFSET + (Integer.BYTES * count)));
@@ -249,7 +261,7 @@ public class INode extends DataBlock {
     public String getFileModeAsString() {
 
         // Obtain short file mode
-        short fileMode = getFileMode();
+        short fileMode = this.getFileMode();
 
         // Obtain file mode read/write/execute permissions string - Directory or File
         String fileInfo = ((fileMode & fileModeCodes[0]) > 0) ? "d" : "-";  

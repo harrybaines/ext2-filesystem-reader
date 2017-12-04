@@ -21,6 +21,7 @@ public class Volume {
     private byte[] fileInBytes;         /* Array of bytes to store the entire volume */
     private ByteBuffer byteBuffer;      /* Byte buffer to store all bytes in this volume */
     private SuperBlock superBlock;      /* Super block reference containing all info about the file system in this volume */
+    private int[] iNodeTablePointers;   /* Array of all the iNode table pointers - the super block fields aid in it's construction */
 
     /** 
      * Constructor used to open a file given a file path to that file.
@@ -42,6 +43,7 @@ public class Volume {
 
         // Create new super block instance
         this.superBlock = new SuperBlock(this);
+        this.iNodeTablePointers = this.getAllINodeTblPointers();
     }
 
     /**
@@ -56,6 +58,63 @@ public class Volume {
         this.file.readFully(this.fileInBytes);
         return true;
     } 
+
+    /**
+     * Method to obtain the group number the iNode belongs to and the index in the array of iNode table pointers.
+     * The correct iNode table pointer can then be used to find the iNode required.
+     * E.g. A table index of 2 indicates the iNode exists in block group 2 and index 2 of the iNode table pointers is the table pointer to use.
+     *
+     * @param iNodeNumber The iNode number.
+     * @param iNodesPerGroup The total number of iNodes per group.
+     * @param totaliNodes The total number of iNodes in the filesystem.
+     * @return The table index (group number and index in array of iNode table pointers).
+     */
+    public int getTablePointerForiNode(int iNodeNumber, int iNodesPerGroup, int totaliNodes) {
+        int tableIndex = 0;
+        for (int i = iNodesPerGroup; i <= totaliNodes; i += iNodesPerGroup) {
+            if (iNodeNumber <= i)
+                break;
+            tableIndex++;
+        }
+        return tableIndex;
+    }
+
+    /**
+     * Retrieves an array of all iNode table pointers from the group descriptors.
+     * The method uses block group 0 to access all group descriptors and uses relevant fields in this class to find the pointers.
+     *
+     * @return The array of all integer iNode table pointers.
+     */
+    private int[] getAllINodeTblPointers() {
+
+        // Obtains array of iNode table pointers from all group descriptors
+        int numBlockGroups = (int) Math.ceil((double) this.superBlock.getTotalBlocks() / (double) this.superBlock.getBlocksPerGroup());
+
+        // Array of iNode table pointers
+        int[] iNodeTablePointers = new int[numBlockGroups];
+
+        // Finds the group descriptors using block group 0 (1024 bytes after superblock)
+        byte[] groupDescBytes = this.superBlock.readBlock(2 * this.superBlock.getBlockSize(), numBlockGroups * GroupDescriptor.GROUP_DESCRIPTOR_SIZE);
+        ByteBuffer groupDescBuffer = ByteBuffer.wrap(groupDescBytes);
+        groupDescBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        int currentDesc = 0;
+
+        // Create new GroupDescriptor instances to obtain iNode table pointers
+        while (currentDesc < numBlockGroups) {
+            iNodeTablePointers[currentDesc] = new GroupDescriptor(groupDescBuffer, currentDesc, this.superBlock).getINodeTblPointer();
+            currentDesc++;
+        }
+        return iNodeTablePointers;
+    }
+
+    /**
+     * Obtains the list of all iNode table pointers found in the group descriptors.
+     * @return List of iNode table pointers.
+     */
+    public int[] getiNodeTablePointers() {
+        return this.iNodeTablePointers;
+    }
 
     /**
      * Obtains the reference to the superblock.
