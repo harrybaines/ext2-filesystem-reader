@@ -35,12 +35,32 @@ public class INode extends DataBlock {
     public static final int DELETED_OFFSET         = 20;    /* Offset, in bytes, for the deleted time */   
     public static final int GROUP_ID_LOWER_OFFSET  = 24;    /* Offset, in bytes, for the lower 16 bits of the group ID */
     public static final int HARD_LINKS_OFFSET      = 26;    /* Offset, in bytes, for the number of hard links */
+    public static final int NUM_512_BLOCKS_OFFSET  = 28;    /* Offset, in bytes, for the number of 512 byte blocks */
     public static final int DIRECT_POINTERS_OFFSET = 40;    /* Offset, in bytes, for the direct pointers */   
     public static final int INDIRECT_OFFSET        = 88;    /* Offset, in bytes, for the indirect pointer */
     public static final int DBL_INDIRECT_OFFSET    = 92;    /* Offset, in bytes, for the double indirect pointer */
     public static final int TRPL_INDIRECT_OFFSET   = 96;    /* Offset, in bytes, for the triple indirect pointer */
     public static final int FILE_SIZE_UPPER_OFFSET = 108;   /* Offset, in bytes, for the upper 32 bits of the file size */
-        
+    public static final int BYTE_BLOCK_SIZE        = 512;   /* Total number of bytes for the number of 512 byte blocks field */
+
+    private short fileMode;
+    private short userIDLower;
+    private int fileSizeLower;
+    private String lastAccessTime;
+    private String creationTime;
+    private String lastModifiedTime;
+    private String deletedTime;
+    private short groupIDLower;
+    private short numHardLinks;
+    private int num512ByteBlocks;
+    private List<Integer> directPointers;
+    private int singleIndirectP;
+    private int doubleIndirectP;
+    private int tripleIndirectP;
+    private int fileSizeUpper;
+    private long totalFileSize;
+    private int unallocatedByteSize;
+
     private ByteBuffer iNodeBuffer;                         /* Byte buffer to store the bytes in the iNode */
     private byte[] iNodeBytes;                              /* Array to store all bytes in the iNode */
 
@@ -82,6 +102,37 @@ public class INode extends DataBlock {
 
         // Set the indirect block size
         indirectBlockSize = superBlock.getBlockSize() / Integer.BYTES;
+
+        // Initialise all the iNode fields
+        this.initINodeFields();
+    }
+
+    /**
+     * Method to initialise all the relevant iNode fields upon instantiation of this iNode.
+     */
+    private void initINodeFields() {
+        
+        this.fileMode         = iNodeBuffer.getShort(FILE_MODE_OFFSET);
+        this.userIDLower      = iNodeBuffer.getShort(USER_ID_LOWER_OFFSET);
+        this.fileSizeLower    = iNodeBuffer.getInt(FILE_SIZE_LOWER_OFFSET);
+
+        this.lastAccessTime   = new SimpleDateFormat("MMM dd HH:mm").format(new Date((long) iNodeBuffer.getInt(LAST_ACCESS_OFFSET) * 1000));
+        this.creationTime     = new SimpleDateFormat("MMM dd HH:mm").format(new Date((long) iNodeBuffer.getInt(CREATION_OFFSET) * 1000));
+        this.lastModifiedTime = new SimpleDateFormat("MMM dd HH:mm").format(new Date((long) iNodeBuffer.getInt(LAST_MODIFIED_OFFSET) * 1000));
+        this.deletedTime      = (iNodeBuffer.getInt(DELETED_OFFSET) == 0) ? "-" : new Date((long) iNodeBuffer.getInt(DELETED_OFFSET) * 1000).toString();
+
+        this.groupIDLower     = iNodeBuffer.getShort(GROUP_ID_LOWER_OFFSET);
+        this.numHardLinks     = iNodeBuffer.getShort(HARD_LINKS_OFFSET);
+        this.num512ByteBlocks = iNodeBuffer.getInt(NUM_512_BLOCKS_OFFSET);
+
+        this.directPointers   = this.getDirectPointers();
+        this.singleIndirectP  = iNodeBuffer.getInt(INDIRECT_OFFSET);
+        this.doubleIndirectP  = iNodeBuffer.getInt(DBL_INDIRECT_OFFSET);
+        this.tripleIndirectP  = iNodeBuffer.getInt(TRPL_INDIRECT_OFFSET);
+        this.fileSizeUpper    = iNodeBuffer.getInt(FILE_SIZE_UPPER_OFFSET);
+        this.totalFileSize    = ((long) this.getUpperFileSize() << 32 | this.getLowerFileSize() & 0xFFFFFFFFL);
+
+        this.unallocatedByteSize = 0;
     }
 
     /**
@@ -107,7 +158,7 @@ public class INode extends DataBlock {
         int indirectionLevel = 0;
 
         // Get all data blocks using just direct pointers from this iNode
-        List<Byte> allDataBlocks = this.getDataBlocks(this.getDirectPointers());
+        List<Byte> allDataBlocks = this.getDataBlocks(this.directPointers);
 
         // Find indirect pointers and search through blocks to find data blocks
         int singleIndirectPointer = this.getIndirectPointer();                    // Initial indirect pointer in iNode
@@ -253,6 +304,22 @@ public class INode extends DataBlock {
     }
 
     /**
+     * Method to set the total number of unallocated bytes in the file this iNode points to.
+     * @param size The number of unallocated bytes.
+     */
+    public void setUnallocatedByteSize(int size) {
+        this.unallocatedByteSize = size;
+    }
+
+    /**
+     * Method to obtain the total number of unallocated bytes in the file this iNode points to.
+     * @return The total number of unallocated bytes.
+     */
+    public int getUnallocatedByteSize() {
+        return this.unallocatedByteSize;
+    }
+
+    /**
      * Retrieves the file mode field for the iNode and returns a string representation.
      * Used in Unix-like directory listings, displaying permissions, directory info etc.
      *
@@ -278,7 +345,7 @@ public class INode extends DataBlock {
      * @return A string representation of the file mode.
      */
     public short getFileMode() {
-        return (iNodeBuffer.getShort(FILE_MODE_OFFSET));
+        return this.fileMode;
     }
 
     /**
@@ -286,7 +353,7 @@ public class INode extends DataBlock {
      * @return The user ID.
      */
     public short getUserID() {
-        return (iNodeBuffer.getShort(USER_ID_LOWER_OFFSET));
+        return this.userIDLower;
     }
 
     /**
@@ -294,7 +361,7 @@ public class INode extends DataBlock {
      * @return Lower 32 bit size of file in bytes.
      */
     public int getLowerFileSize() {
-        return (iNodeBuffer.getInt(FILE_SIZE_LOWER_OFFSET));
+        return this.fileSizeLower;
     }
 
     /**
@@ -302,9 +369,7 @@ public class INode extends DataBlock {
      * @return String representation of last access time.
      */
     public String getLastAccessTime() {
-        Date accessDate = new Date( (long) iNodeBuffer.getInt(LAST_ACCESS_OFFSET) * 1000 );
-        String formattedTime = new SimpleDateFormat("MMM dd HH:mm").format(accessDate);
-        return formattedTime;
+        return this.lastAccessTime;
     }
 
     /**
@@ -312,9 +377,7 @@ public class INode extends DataBlock {
      * @return String representation of creation time.
      */
     public String getCreationTime() {
-        Date creationDate = new Date( (long) iNodeBuffer.getInt(CREATION_OFFSET) * 1000 );
-        String formattedTime = new SimpleDateFormat("MMM dd HH:mm").format(creationDate);
-        return formattedTime;
+        return this.creationTime;
     }
 
     /**
@@ -322,9 +385,7 @@ public class INode extends DataBlock {
      * @return String representation of last modified time.
      */
     public String getLastModifiedTime() {
-        Date modifiedDate = new Date( (long) iNodeBuffer.getInt(LAST_MODIFIED_OFFSET) * 1000 );
-        String formattedTime = new SimpleDateFormat("MMM dd HH:mm").format(modifiedDate);
-        return formattedTime;
+        return this.lastModifiedTime;
     }
 
     /**
@@ -332,9 +393,7 @@ public class INode extends DataBlock {
      * @return String representation of deleted time.
      */
     public String getDeletedTime() {
-        int delTime = iNodeBuffer.getInt(DELETED_OFFSET);
-        String deletedTime = (delTime == 0) ? "-" : new Date( (long) delTime * 1000 ).toString();
-        return deletedTime;
+        return this.deletedTime;
     }
 
     /**
@@ -342,7 +401,7 @@ public class INode extends DataBlock {
      * @return The group ID.
      */
     public int getGroupID() {
-        return (iNodeBuffer.getShort(GROUP_ID_LOWER_OFFSET));
+        return this.groupIDLower;
     }
 
     /**
@@ -350,7 +409,15 @@ public class INode extends DataBlock {
      * @return The number of hard links.
      */
     public int getNumHardLinks() {
-        return (iNodeBuffer.getShort(HARD_LINKS_OFFSET));
+        return this.numHardLinks;
+    }
+
+    /**
+     * Retrieves the number of 512 byte blocks that make up this file.
+     * @return The number of 512 byte blocks.
+     */
+    public int getNum512ByteBlocks() {
+        return this.num512ByteBlocks;
     }
 
     /**
@@ -358,7 +425,7 @@ public class INode extends DataBlock {
      * @return The single-indirect data block pointer.
      */
     public int getIndirectPointer() {
-        return (iNodeBuffer.getInt(INDIRECT_OFFSET));
+        return this.singleIndirectP;
     }
 
     /**
@@ -366,7 +433,7 @@ public class INode extends DataBlock {
      * @return The double-indirect data block pointer.
      */
     public int getDoubleIndirectPointer() {
-        return (iNodeBuffer.getInt(DBL_INDIRECT_OFFSET));
+        return this.doubleIndirectP;
     }
 
     /**
@@ -374,7 +441,7 @@ public class INode extends DataBlock {
      * @return The triple-indirect data block pointer.
      */
     public int getTripleIndirectPointer() {
-        return (iNodeBuffer.getInt(TRPL_INDIRECT_OFFSET));
+        return this.tripleIndirectP;
     }
 
     /**
@@ -382,7 +449,7 @@ public class INode extends DataBlock {
      * @return Upper 32 bit size of file in bytes.
      */
     public int getUpperFileSize() {
-        return (iNodeBuffer.getInt(FILE_SIZE_UPPER_OFFSET));
+        return this.fileSizeUpper;
     }
 
     /**
@@ -390,7 +457,7 @@ public class INode extends DataBlock {
      * @return The size of the file referenced by this iNode.
      */
     public long getTotalFileSize() {
-        return ( (long) this.getUpperFileSize() << 32 | this.getLowerFileSize() & 0xFFFFFFFFL );
+        return this.totalFileSize;
     }
 
     /**
@@ -402,7 +469,7 @@ public class INode extends DataBlock {
     }
 
     /** 
-     * Method to obtain all iNode fields.
+     * Method to obtain all iNode fields in the form of a byte array.
      * @return Array of bytes containing the iNode fields.
      */
     public byte[] getINodeInfoBytes() {

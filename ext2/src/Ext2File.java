@@ -2,6 +2,7 @@ package ext2;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -62,6 +63,7 @@ public class Ext2File extends DataBlock {
      * Method to read the file the user specified in the file string.
      * The method will read bytes from startByte up to the length they provide.
      * An array of bytes will be returned containing all bytes in the file.
+     * If the file is sparse, a sequence of 0s will be returned alongisde the file data.
      *
      * @param startByte The byte to start reading from in the file.
      * @param length The length of the file the user wishes to read in bytes.
@@ -69,31 +71,64 @@ public class Ext2File extends DataBlock {
      */
     public byte[] read(long startByte, long length) {
 
-        List<Byte> dataBytesList = new ArrayList<Byte>();
-
-        byte[] byteArray = new byte[0];
+        // Contains useful info from file
+        byte[] joinedArray = new byte[0];
 
         // If file exists
-        if (iNodeForFileToOpen != null) {
+        if (this.iNodeForFileToOpen != null) {
 
             // Error checking, throw exception if necessary
-            if (startByte < 0 || startByte >= iNodeForFileToOpen.getTotalFileSize()) {
+            if (startByte < 0 || startByte >= this.iNodeForFileToOpen.getTotalFileSize()) {
                 System.out.println("----------\nCouldn't read data at that position! \n----------");
                 throw new NullPointerException();
             }
 
             // Find and read all datablocks for the file, if found successfully
-            byte[] dataBlocksFromPointers = iNodeForFileToOpen.getDataBlocksFromPointers();
+            byte[] dataBlocksFromPointers = this.iNodeForFileToOpen.getDataBlocksFromPointers();
             ByteBuffer dataBlocksBuffer = ByteBuffer.wrap(dataBlocksFromPointers);
 
             // Transfer all bytes to array to return
-            byteArray = new byte[dataBlocksBuffer.remaining()];
-            dataBlocksBuffer.get(byteArray);
+            byte[] byteArray = new byte[dataBlocksBuffer.remaining()];
+            dataBlocksBuffer.get(byteArray);  
+
+            // Extract useful data
+            List<Byte> usefulList = new ArrayList<Byte>();
+            for (byte b : byteArray)
+                if (b != 0)
+                    usefulList.add(b);
+
+            // Transfer in sequence of zero's for sparse files
+            List<Byte> usefulAndZeros = usefulList;
+            
+            // Find total number of bytes allocated to the file
+            int curVal = this.iNodeForFileToOpen.getNum512ByteBlocks() * this.iNodeForFileToOpen.BYTE_BLOCK_SIZE - usefulAndZeros.size();
+
+            // Calculate number of 0s to place for sparse files
+            int ind = 0;
+            if (curVal > this.superBlock.getBlockSize()) {
+
+                curVal -= this.superBlock.getBlockSize();
+
+                this.iNodeForFileToOpen.setUnallocatedByteSize(curVal);
+
+                while (ind < curVal) {
+                    usefulAndZeros.add((byte) 0);
+                    ind++;
+                }
+            }
+            
+            // Finally, transfer bytes to array to return
+            int index = 0;
+            joinedArray = new byte[usefulAndZeros.size()];
+            for (byte b : usefulAndZeros) {
+                joinedArray[index] = b;
+                index++;
+            }
         }
         else
             System.out.println(this.filePathString + " - couldn't read this file - either a directory or doesn't exist.");
 
-        return byteArray;
+        return joinedArray;
     }
 
     /**
@@ -254,14 +289,19 @@ public class Ext2File extends DataBlock {
      */
     public void printFileContents(byte[] bytes) {
 
-        //System.out.println("Length: " + bytes.length);
-
         System.out.println(filePathString + " is " + ((isDirectory == true) ? "a directory." : "a file."));
         String fileContentsString = "";
         if (bytes.length == 0)
             fileContentsString += "----------\nNo file contents for " + this.filePathString + "\n----------\n";
-        else if (!isDirectory)
-            fileContentsString += "----------\n\033[1mFile Contents for '" + filePathString + "':\033[0m\n----------\n" + new String(bytes) + "----------";
+        else if (!isDirectory) {
+            String toPrint = "";
+            for (byte b : bytes)
+                if (b == 0)
+                    toPrint += "0";
+                else
+                    toPrint += (char) b;
+            fileContentsString += "----------\n\033[1mFile Contents for '" + filePathString + "':\033[0m\n----------\n" + toPrint + "\n----------";
+        }
 
         System.out.println(fileContentsString + "\n"); 
     }

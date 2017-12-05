@@ -212,8 +212,8 @@ public class Ext2Reader extends JFrame implements ActionListener {
         this.setJMenuBar(menuBar);
 
         // Final window details
-        topPanel.setBackground(new Color(221, 255, 204));
-        middlePanel.setBackground(new Color(221, 255, 204));
+        topPanel.setBackground(new Color(221, 225, 204));
+        middlePanel.setBackground(new Color(221, 225, 204));
         this.add(mainPanel);
         this.setTitle("Ext2Reader");
         this.setSize(WIDTH, HEIGHT);
@@ -297,12 +297,16 @@ public class Ext2Reader extends JFrame implements ActionListener {
 
                     // View regular file contents
                     else {
-
                         if (fileChosen.getiNodeForFileToOpen() != null) {
                             String stringToPrint = "";
+
+                            // Append 0 for sparse files, otherwise add char equivalent
                             for (int i = 0; i < fileBuf.length; i++)
-                                if (fileBuf[i] != 0)
-                                    stringToPrint += (char) fileBuf[i];
+                                stringToPrint += (fileBuf[i] == 0) ? "0" : (char) fileBuf[i];
+
+                            int unallocBytes = fileChosen.getiNodeForFileToOpen().getUnallocatedByteSize();
+                            if (unallocBytes > 0)
+                                JOptionPane.showMessageDialog(null, "Sparse file detected - " + unallocBytes + " 0s have been added.", "Sparse File", JOptionPane.ERROR_MESSAGE);
 
                             textArea.append(new String(stringToPrint));
                         }

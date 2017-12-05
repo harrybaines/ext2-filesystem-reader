@@ -48,7 +48,7 @@ public class Driver {
         Ext2File deepDownFile = new Ext2File(vol, "/deep/down/in/the/filesystem/there/lived/a/file");
         deepDownFile.printDirectoryInfo();
         byte deepDownBuf[] = deepDownFile.read(0L, deepDownFile.getSize());
-        h.dumpHexBytes(deepDownBuf);
+        //h.dumpHexBytes(deepDownBuf);
         deepDownFile.printFileContents(deepDownBuf);
 
         Ext2File dirStart = new Ext2File(vol, "/files/dir-s");
@@ -66,11 +66,11 @@ public class Driver {
 
         Ext2File doubleStart = new Ext2File(vol, "/files/dbl-ind-s");
         byte doubleStartBuf[] = doubleStart.read(0L, doubleStart.getSize());
-        h.dumpHexBytes(doubleStartBuf);
+        doubleStart.printFileContents(doubleStart.read(0L, doubleStart.getSize()));
 
         Ext2File doubleEnd = new Ext2File(vol, "/files/dbl-ind-e");
         byte doubleEndBuf[] = doubleEnd.read(0L, doubleEnd.getSize());
-        h.dumpHexBytes(doubleEndBuf);
+        doubleEnd.printFileContents(doubleEnd.read(0L, doubleEnd.getSize()));
 
         Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
         tripleStart.printFileContents(tripleStart.read(0L, tripleStart.getSize()));
