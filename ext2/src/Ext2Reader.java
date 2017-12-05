@@ -278,7 +278,7 @@ public class Ext2Reader extends JFrame implements ActionListener {
             }
             else {
                 if (fileChosen.isDirectory() && !viewHexAscii)
-                    JOptionPane.showMessageDialog(null, "Can't view file contents, this is a directory. Try viewing as hex and ASCII.", "File Content Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Couldn't view file contents. Try viewing as hex and ASCII.", "File Content Error", JOptionPane.ERROR_MESSAGE);
                 else {
 
                     // Read file contents

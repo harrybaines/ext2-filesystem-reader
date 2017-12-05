@@ -77,6 +77,11 @@ public class Ext2File extends DataBlock {
         // If file exists
         if (this.iNodeForFileToOpen != null) {
 
+            if (this.iNodeForFileToOpen.getTotalFileSize() == 0) {
+                System.out.println("----------\nEmpty file! \n----------");
+                return joinedArray;
+            }
+
             // Error checking, throw exception if necessary
             if (startByte < 0 || startByte >= this.iNodeForFileToOpen.getTotalFileSize()) {
                 System.out.println("----------\nCouldn't read data at that position! \n----------");

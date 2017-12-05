@@ -21,11 +21,13 @@ import java.text.SimpleDateFormat;
  */
 public class INode extends DataBlock {
 
+    /* CONSTANTS */
     public static final int[] fileModeCodes = { 0x4000, 0x0100, 0x0080, 0x0040, 0x0020, 
                                                 0x0010, 0x0008, 0x0004, 0x0002, 0x0001 };   /* File mode hex codes */
 
     public static final char[] permissions = { 'r', 'w', 'x' };    /* User/Group/Others can Read/Write/Execute */
 
+    /* OFFSETS */
     public static final int FILE_MODE_OFFSET       = 0;     /* Offset, in bytes, for the file mode */
     public static final int USER_ID_LOWER_OFFSET   = 2;     /* Offset, in bytes, for the lower 16 bits of the user ID */
     public static final int FILE_SIZE_LOWER_OFFSET = 4;     /* Offset, in bytes, for the lower 16 bits of the file size */
@@ -43,23 +45,24 @@ public class INode extends DataBlock {
     public static final int FILE_SIZE_UPPER_OFFSET = 108;   /* Offset, in bytes, for the upper 32 bits of the file size */
     public static final int BYTE_BLOCK_SIZE        = 512;   /* Total number of bytes for the number of 512 byte blocks field */
 
-    private short fileMode;
-    private short userIDLower;
-    private int fileSizeLower;
-    private String lastAccessTime;
-    private String creationTime;
-    private String lastModifiedTime;
-    private String deletedTime;
-    private short groupIDLower;
-    private short numHardLinks;
-    private int num512ByteBlocks;
-    private List<Integer> directPointers;
-    private int singleIndirectP;
-    private int doubleIndirectP;
-    private int tripleIndirectP;
-    private int fileSizeUpper;
-    private long totalFileSize;
-    private int unallocatedByteSize;
+    /* INODE FIELDS */
+    private short fileMode;                                 /* File mode field */
+    private short userIDLower;                              /* Lower 16 bits of user ID field */
+    private int fileSizeLower;                              /* Lower 16 bits of file size field */
+    private String lastAccessTime;                          /* Last access time field */
+    private String creationTime;                            /* Creation time field */
+    private String lastModifiedTime;                        /* Last modified field */
+    private String deletedTime;                             /* Deleted time field */
+    private short groupIDLower;                             /* Lower 16 bits of group ID field */
+    private short numHardLinks;                             /* Number of hard links field */
+    private int num512ByteBlocks;                           /* Number of 512 byte blocks field */
+    private List<Integer> directPointers;                   /* List of direct pointers field */
+    private int singleIndirectP;                            /* Single indirect pointer field */
+    private int doubleIndirectP;                            /* Double indirect pointer field */
+    private int tripleIndirectP;                            /* Triple indirect pointer field */
+    private int fileSizeUpper;                              /* Upper 16 bits of file size field */
+    private long totalFileSize;                             /* Total file size */
+    private int unallocatedByteSize;                        /* Number of unallocated bytes to file this iNode points to */
 
     private ByteBuffer iNodeBuffer;                         /* Byte buffer to store the bytes in the iNode */
     private byte[] iNodeBytes;                              /* Array to store all bytes in the iNode */

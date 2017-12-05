@@ -81,7 +81,6 @@ public class Helper {
 
             asciiString += "\n";
             hexBytesString += hexString + asciiString;
-            
             System.out.print(hexString + asciiString);
         }
         System.out.println("----------\n");
