@@ -137,7 +137,9 @@ public class Ext2File extends DataBlock {
      * @param length The length of the file the user wishes to read in bytes.
      * @return An array of bytes relevant to the file opened.
      */
-    public byte[] read(long length) {
+    public byte[] read(long length) throws IndexOutOfBoundsException {
+        if (this.position > this.iNodeForFileToOpen.getTotalFileSize())
+            throw new IndexOutOfBoundsException();
         return (this.read(this.position, length));
     }
 
