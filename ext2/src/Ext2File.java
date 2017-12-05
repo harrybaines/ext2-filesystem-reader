@@ -92,21 +92,14 @@ public class Ext2File extends DataBlock {
             byte[] dataBlocksFromPointers = this.iNodeForFileToOpen.getDataBlocksFromPointers();
             ByteBuffer dataBlocksBuffer = ByteBuffer.wrap(dataBlocksFromPointers);
 
-            // Transfer all bytes to array to return
-            byte[] byteArray = new byte[dataBlocksBuffer.remaining()];
-            dataBlocksBuffer.get(byteArray);  
-
             // Extract useful data
             List<Byte> usefulList = new ArrayList<Byte>();
-            for (byte b : byteArray)
+            for (byte b : dataBlocksBuffer.array())
                 if (b != 0)
                     usefulList.add(b);
-
-            // Transfer in sequence of zero's for sparse files
-            List<Byte> usefulAndZeros = usefulList;
             
             // Find total number of bytes allocated to the file
-            int curVal = this.iNodeForFileToOpen.getNum512ByteBlocks() * this.iNodeForFileToOpen.BYTE_BLOCK_SIZE - usefulAndZeros.size();
+            int curVal = this.iNodeForFileToOpen.getNum512ByteBlocks() * this.iNodeForFileToOpen.BYTE_BLOCK_SIZE - usefulList.size();
 
             // Calculate number of 0s to place for sparse files
             int ind = 0;
@@ -117,15 +110,15 @@ public class Ext2File extends DataBlock {
                 this.iNodeForFileToOpen.setUnallocatedByteSize(curVal);
 
                 while (ind < curVal) {
-                    usefulAndZeros.add((byte) 0);
+                    usefulList.add((byte) 0);
                     ind++;
                 }
             }
             
             // Finally, transfer bytes to array to return
             int index = 0;
-            joinedArray = new byte[usefulAndZeros.size()];
-            for (byte b : usefulAndZeros) {
+            joinedArray = new byte[usefulList.size()];
+            for (byte b : usefulList) {
                 joinedArray[index] = b;
                 index++;
             }
@@ -307,7 +300,6 @@ public class Ext2File extends DataBlock {
                     toPrint += (char) b;
             fileContentsString += "----------\n\033[1mFile Contents for '" + filePathString + "':\033[0m\n----------\n" + toPrint + "\n----------";
         }
-
         System.out.println(fileContentsString + "\n"); 
     }
 
