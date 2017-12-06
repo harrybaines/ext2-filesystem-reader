@@ -89,13 +89,13 @@ public class Directory extends DataBlock {
         if (filenameStr.equals(file.getNextDirectoryString()))
             this.nextINode = currentINode;
 
-        String rowString = currentINode.getFileModeAsString() + "  " + String.format("%2s", Integer.toString(currentINode.getNumHardLinks())) + "  " + users + "  "; 
+        String rowString = currentINode.getFileModeAsString() + " " + String.format("%2s", Integer.toString(currentINode.getNumHardLinks())) + "  " + users + "  "; 
 
         // Check for corruption
         if (currentINode.getTotalFileSize() < 0)
             rowString = "error - corrupted file!\n";
         else
-            rowString += String.format("%12s", Long.toString(currentINode.getTotalFileSize())) + "  " + currentINode.getLastModifiedTime() + " " + filenameStr + "\n"; 
+            rowString += String.format("%12s", Long.toString(currentINode.getTotalFileSize())) + "  " + currentINode.getLastModifiedTime() + "  " + filenameStr + "\n"; 
 
         // Unix-style directory listing for a given iNode
         return rowString;

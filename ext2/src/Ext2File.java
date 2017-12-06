@@ -99,21 +99,33 @@ public class Ext2File extends DataBlock {
                     usefulList.add(b);
             
             // Find total number of bytes allocated to the file
-            int curVal = this.iNodeForFileToOpen.getNum512ByteBlocks() * this.iNodeForFileToOpen.BYTE_BLOCK_SIZE - usefulList.size();
+            System.out.println("1024 byte blocks allocated: " + this.iNodeForFileToOpen.getNum512ByteBlocks() * this.iNodeForFileToOpen.BYTE_BLOCK_SIZE / 1024);
+            int curBytes = (this.iNodeForFileToOpen.getNum512ByteBlocks() * this.iNodeForFileToOpen.BYTE_BLOCK_SIZE) - usefulList.size();
+            
+            this.iNodeForFileToOpen.setAllocatedBlocks((curBytes/1024) + 1);
+            System.out.println("curBytes: " + curBytes);
+
+            this.iNodeForFileToOpen.setUsedByteSize(usefulList.size());
+            System.out.println("Useful: " + usefulList.size());
 
             // Calculate number of 0s to place for sparse files
-            int ind = 0;
-            if (curVal > this.superBlock.getBlockSize()) {
+            int zeroCount = 0;
+            while (curBytes > this.superBlock.getBlockSize()) {
 
-                curVal -= this.superBlock.getBlockSize();
+                int ind = 0;
+                curBytes -= this.superBlock.getBlockSize();
 
-                this.iNodeForFileToOpen.setUnallocatedByteSize(curVal);
-
-                while (ind < curVal) {
+                while (ind < this.superBlock.getBlockSize()) {
                     usefulList.add((byte) 0);
                     ind++;
+                    zeroCount++;
                 }
             }
+
+            this.iNodeForFileToOpen.setZeroCount(zeroCount);
+            this.iNodeForFileToOpen.setUnusedBlocks(zeroCount/this.superBlock.getBlockSize());
+
+            System.out.println("Zeros to add: " + zeroCount);
             
             // Finally, transfer bytes to array to return
             int index = 0;

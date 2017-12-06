@@ -304,9 +304,16 @@ public class Ext2Reader extends JFrame implements ActionListener {
                             for (int i = 0; i < fileBuf.length; i++)
                                 stringToPrint += (fileBuf[i] == 0) ? "0" : (char) fileBuf[i];
 
-                            int unallocBytes = fileChosen.getiNodeForFileToOpen().getUnallocatedByteSize();
+                            // Calculate sparse info for sparse file to print
+                            int unallocBytes = fileChosen.getiNodeForFileToOpen().getZeroCount();
+                            String sparseMessage = "Sparse file detected! \n\n" + 
+                                    + fileChosen.getiNodeForFileToOpen().getAllocatedBlocks() + " 1024-byte blocks have been allocated,\n"
+                                    + fileChosen.getiNodeForFileToOpen().getUnusedBlocks() + " 1024-byte blocks have no data yet.\n\n"
+                                    + fileChosen.getiNodeForFileToOpen().getUsedByteSize() + " bytes have been written in this file,\n"
+                                    + unallocBytes + " 0s have been added.\n";
+                            
                             if (unallocBytes > 0)
-                                JOptionPane.showMessageDialog(null, "Sparse file detected - " + unallocBytes + " 0s have been added.", "Sparse File", JOptionPane.ERROR_MESSAGE);
+                                JOptionPane.showMessageDialog(null, sparseMessage, "Sparse File", JOptionPane.PLAIN_MESSAGE);
 
                             textArea.append(new String(stringToPrint));
                         }
