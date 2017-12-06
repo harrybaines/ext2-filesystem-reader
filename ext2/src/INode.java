@@ -62,10 +62,6 @@ public class INode extends DataBlock {
     private int tripleIndirectP;                            /* Triple indirect pointer field */
     private int fileSizeUpper;                              /* Upper 16 bits of file size field */
     private long totalFileSize;                             /* Total file size */
-    private int allocatedBlocks;                            /* Number of allocated bytes to file this iNode points to */
-    private int unallocatedBlocks;                          /* Number of unused blocks for bytes in the file this iNode points to */
-    private int zeros;                                      /* The total number of 0s allocated to this file if it's sparse */
-    private int usedByteSize;                               /* The total number of bytes used so far in the file this iNode points to */
 
     private ByteBuffer iNodeBuffer;                         /* Byte buffer to store the bytes in the iNode */
     private byte[] iNodeBytes;                              /* Array to store all bytes in the iNode */
@@ -308,70 +304,6 @@ public class INode extends DataBlock {
     }
 
     /**
-     * Method to set the total number of unused blocks for bytes in the file this iNode points to.
-     * @param blocks The number of unused blocks.
-     */
-    public void setUnusedBlocks(int blocks) {
-        this.unallocatedBlocks = blocks;
-    }
-
-    /**
-     * Method to obtain the total number of unused blocks for bytes in the file this iNode points to.
-     * @return The total number of unused blocks.
-     */
-    public int getUnusedBlocks() {
-        return this.unallocatedBlocks;
-    }
-
-    /**
-     * Method to set the total number of blocks allocated for bytes in the file this iNode points to.
-     * @param blocks The number of allocated blocks.
-     */
-    public void setAllocatedBlocks(int blocks) {
-        this.allocatedBlocks = blocks;
-    }
-
-    /**
-     * Method to obtain the total number of blocks allocated for bytes in the file this iNode points to.
-     * @return The total number of allocated blocks.
-     */
-    public int getAllocatedBlocks() {
-        return this.allocatedBlocks;
-    }
-
-    /**
-     * Method to set the total number of bytes used in the file this iNode points to.
-     * @param size The total number of bytes used.
-     */
-    public void setUsedByteSize(int size) {
-        this.usedByteSize = size;
-    }
-
-    /**
-     * Method to obtain the total number of bytes used in the file this iNode points to.
-     * @return The total number of bytes used.
-     */
-    public int getUsedByteSize() {
-        return this.usedByteSize;
-    }
-
-    /**
-     * Method to obtain the total number of 0s allocated for this file if it is sparse.
-     * @return The total number of 0s.
-     */
-    public int getZeroCount() {
-        return this.zeros;
-    }
-
-    /**
-     * Method to set the total number of 0s that have been allocated to this file.
-     * @param zeros The total number of 0s.
-     */
-    public void setZeroCount(int zeros) {
-        this.zeros = zeros;
-    }
-
-    /**
      * Retrieves the file mode field for the iNode and returns a string representation.
      * Used in Unix-like directory listings, displaying permissions, directory info etc.
      *
@@ -465,14 +397,6 @@ public class INode extends DataBlock {
     }
 
     /**
-     * Retrieves the number of 512 byte blocks that make up this file.
-     * @return The number of 512 byte blocks.
-     */
-    public int getNum512ByteBlocks() {
-        return this.num512ByteBlocks;
-    }
-
-    /**
      * Retrieves the 4-byte integer indirect data block pointer from the iNode.
      * @return The single-indirect data block pointer.
      */
@@ -526,5 +450,13 @@ public class INode extends DataBlock {
      */
     public byte[] getINodeInfoBytes() {
         return this.iNodeBytes;
+    }
+
+    /**
+     * Returns the current instance of this iNode.
+     * @return This iNode instance;
+     */
+    public INode getINode() {
+        return this;
     }
 }

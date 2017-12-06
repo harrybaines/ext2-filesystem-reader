@@ -49,8 +49,10 @@ public class Ext2Reader extends JFrame implements ActionListener {
     private JCheckBoxMenuItem hexAscciItem;     /* User can change output to view hex and ASCII */
     private JMenuItem viewRootItem;             /* User can view the root directory */
     private JMenuItem viewRootAsHexItem;        /* User can view the root directory in hex and ASCII format */
+    private JMenuItem setReadItem;              /* User can set the length of data to read from files */
     private JMenuItem resetItem;                /* User can reset input and output fields */
     private boolean viewHexAscii;               /* Monitors if user is currently viewing in hex and ASCII format */
+    private long readLength;                    /* The length of data the user wishes to read in files */
 
     /**
      * Constructor to initialise all the components on the UI and present the window to the user.
@@ -63,6 +65,7 @@ public class Ext2Reader extends JFrame implements ActionListener {
         this.viewHexAscii = false;
         this.h = new Helper();
         this.groupDescriptors = Ext2Reader.this.vol.getGroupDescriptors();
+        this.readLength = 2000;   // 2000 by default, but user can change
 
         // Initialise panels
         mainPanel = new JPanel(new BorderLayout());
@@ -206,6 +209,8 @@ public class Ext2Reader extends JFrame implements ActionListener {
 
         // Build second menu in the menu bar
         menu = new JMenu("Tools");
+        setReadItem = new JMenuItem(new Action("Set Read Length"));
+        menu.add(setReadItem);
         resetItem = new JMenuItem(new Action("Reset Entry"));
         menu.add(resetItem);
         menuBar.add(menu);
@@ -278,17 +283,16 @@ public class Ext2Reader extends JFrame implements ActionListener {
             }
             else {
                 if (fileChosen.isDirectory() && !viewHexAscii)
-                    JOptionPane.showMessageDialog(null, "Couldn't view file contents. Try viewing as hex and ASCII.", "File Content Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Can't view file contents, this is a directory. Try viewing as hex and ASCII.", "File Content Error", JOptionPane.ERROR_MESSAGE);
                 else {
 
                     // Read file contents
-                    byte fileBuf[] = fileChosen.read(0L, fileChosen.getSize());
+                    byte fileBuf[] = fileChosen.read(0L, this.readLength);
 
                     // View file contents as hex and ASCII if specified
                     if (viewHexAscii) {
-                        if (fileChosen.isDirectory() || filePath.equals("/")) {
+                        if (fileChosen.isDirectory() || filePath.equals("/"))
                             areaString = h.getHexBytesString(fileChosen.getDirDataBuffer().array());
-                        }
                         else
                             areaString = h.getHexBytesString(fileBuf);
                         textArea.append(areaString);
@@ -301,24 +305,26 @@ public class Ext2Reader extends JFrame implements ActionListener {
                             String stringToPrint = "";
 
                             // Append 0 for sparse files, otherwise add char equivalent
-                            for (int i = 0; i < fileBuf.length; i++)
-                                stringToPrint += (fileBuf[i] == 0) ? "0" : (char) fileBuf[i];
-
-                            // Calculate sparse info for sparse file to print
-                            int unallocBytes = fileChosen.getiNodeForFileToOpen().getZeroCount();
-                            String sparseMessage = "Sparse file detected! \n\n" + 
-                                    + fileChosen.getiNodeForFileToOpen().getAllocatedBlocks() + " 1024-byte blocks have been allocated,\n"
-                                    + fileChosen.getiNodeForFileToOpen().getUnusedBlocks() + " 1024-byte blocks have no data yet.\n\n"
-                                    + fileChosen.getiNodeForFileToOpen().getUsedByteSize() + " bytes have been written in this file,\n"
-                                    + unallocBytes + " 0s have been added.\n";
-                            
-                            if (unallocBytes > 0)
-                                JOptionPane.showMessageDialog(null, sparseMessage, "Sparse File", JOptionPane.PLAIN_MESSAGE);
+                            int zeroCount = 0;
+                            int totalCount = 0;
+                            for (int i = 0; i < fileBuf.length; i++) {
+                                char c = (char) fileBuf[i];
+                                if (c == 0) {
+                                    stringToPrint += "0";
+                                    zeroCount++;
+                                }
+                                else 
+                                    stringToPrint += c;
+                                totalCount++;
+                            }
+                            if (zeroCount > 0)
+                                JOptionPane.showMessageDialog(null, "Chose to read " + totalCount + " bytes in total.\n" + zeroCount + " byte(s) have no data.", 
+                                    "File Hole Detected", JOptionPane.PLAIN_MESSAGE);
 
                             textArea.append(new String(stringToPrint));
                         }
                         else
-                            JOptionPane.showMessageDialog(null, "Couldn't view file contents. Try viewing as hex and ASCII.", "File Content Error", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(null, "Couldn't view file contents. Try viewing as hex and ASCII.", "File Content Error", JOptionPane.PLAIN_MESSAGE);
                     }   
                 }
             }
@@ -410,6 +416,31 @@ public class Ext2Reader extends JFrame implements ActionListener {
             else if (e.getSource() == resetItem) {
                 userEntry.setText("");
                 textArea.setText("");
+            }
+
+            // Set read length entry
+            else if (e.getSource() == setReadItem) {
+
+                JTextField entryLength = new JTextField(Long.toString(readLength));
+                JPanel panel = new JPanel(new GridLayout(0, 1));
+                panel.add(new JLabel("New Read Length:"));
+                panel.add(entryLength);
+
+                readLength = 0;
+                while (readLength == 0) {
+                    int opt = JOptionPane.showConfirmDialog(null, panel, "Set Read Length", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                    readLength = Long.parseLong(entryLength.getText()); 
+
+                    if (opt == JOptionPane.OK_OPTION) {
+                        if (readLength <= 0) {
+                            JOptionPane.showMessageDialog(null, "Please enter a length greater than 0.", "Length Error", JOptionPane.PLAIN_MESSAGE);
+                            readLength = 0;
+                        }
+
+                    } else {
+                        System.out.println("Cancelled");
+                    }
+                }
             }
 
             // Quit program

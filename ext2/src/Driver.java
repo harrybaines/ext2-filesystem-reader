@@ -42,8 +42,10 @@ public class Driver {
         Ext2File twoCities = new Ext2File(vol, "/two-cities");
         twoCities.printDirectoryInfo();
         twoCities.seek(20);
-        byte twoCitiesBuf[] = twoCities.read(twoCities.getPosition(), twoCities.getSize());
+        byte twoCitiesBuf[] = twoCities.read(twoCities.getPosition(), twoCities.getSize() + 10);
         twoCities.printFileContents(twoCitiesBuf);
+
+        //h.printINodeInfo(twoCities.getiNodeForFileToOpen().getINode());
 
         Ext2File deepDownFile = new Ext2File(vol, "/deep/down/in/the/filesystem/there/lived/a/file");
         deepDownFile.printDirectoryInfo();
@@ -53,30 +55,28 @@ public class Driver {
 
         Ext2File dirStart = new Ext2File(vol, "/files/dir-s");
         dirStart.printDirectoryInfo();
-        dirStart.printFileContents(dirStart.read(0L, dirStart.getSize()));
+        dirStart.printFileContents(dirStart.read(0L, 50));
 
         Ext2File dirEnd = new Ext2File(vol, "/files/dir-e");
-        dirEnd.printFileContents(dirEnd.read(0L, dirEnd.getSize()));
+        dirEnd.printFileContents(dirEnd.read(0L, 50));
 
         Ext2File indStart = new Ext2File(vol, "/files/ind-s");
-        indStart.printFileContents(indStart.read(0L, indStart.getSize()));
+        indStart.printFileContents(indStart.read(0L, 50));
 
         Ext2File indEnd = new Ext2File(vol, "/files/ind-e");
-        indEnd.printFileContents(indEnd.read(0L, indEnd.getSize()));
+        indEnd.printFileContents(indEnd.read(0L, 50));
 
         Ext2File doubleStart = new Ext2File(vol, "/files/dbl-ind-s");
-        byte doubleStartBuf[] = doubleStart.read(0L, doubleStart.getSize());
-        doubleStart.printFileContents(doubleStart.read(0L, doubleStart.getSize()));
+        doubleStart.printFileContents(doubleStart.read(0L, 50));
 
         Ext2File doubleEnd = new Ext2File(vol, "/files/dbl-ind-e");
-        byte doubleEndBuf[] = doubleEnd.read(0L, doubleEnd.getSize());
-        doubleEnd.printFileContents(doubleEnd.read(0L, doubleEnd.getSize()));
+        doubleEnd.printFileContents(doubleEnd.read(0L, 50));
 
         Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
-        tripleStart.printFileContents(tripleStart.read(0L, tripleStart.getSize()));
+        tripleStart.printFileContents(tripleStart.read(0L, 50));
 
         Ext2File tripleEnd = new Ext2File(vol, "/files/trpl-ind-e");
-        tripleEnd.printFileContents(tripleEnd.read(0L, tripleEnd.getSize()));
+        tripleEnd.printFileContents(tripleEnd.read(0L, 50));
 
         System.out.println("Time to open all files: " + (System.currentTimeMillis() - startTime) + "ms\n");
 
