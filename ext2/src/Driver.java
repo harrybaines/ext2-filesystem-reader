@@ -36,9 +36,6 @@ public class Driver {
         // 1. Create new file
         // 2. Print directory information
         // 3. Read file contents + display file contents
-        Ext2File root = new Ext2File(vol, "/root");
-        root.printDirectoryInfo();
-
         Ext2File twoCities = new Ext2File(vol, "/two-cities");
         twoCities.printDirectoryInfo();
         twoCities.seek(20);

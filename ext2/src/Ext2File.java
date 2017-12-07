@@ -72,10 +72,10 @@ public class Ext2File extends DataBlock {
      *
      * @param startByte The byte to start reading from in the file.
      * @param length The length of the file the user wishes to read in bytes.
-     * @throws NullPointerException
+     * @throws IndexOutOfBoundsException
      * @return An array of bytes relevant to the file opened.
      */
-    public byte[] read(long startByte, long length) throws NullPointerException {
+    public byte[] read(long startByte, long length) throws IndexOutOfBoundsException {
 
         // Contains useful info from file
         byte[] joinedArray = new byte[0];
@@ -91,7 +91,7 @@ public class Ext2File extends DataBlock {
             // Error checking, throw exception if necessary
             if (startByte < 0 || startByte >= this.iNodeForFileToOpen.getTotalFileSize()) {
                 System.out.println("----------\nCouldn't read data at that position! \n----------");
-                throw new NullPointerException();
+                throw new IndexOutOfBoundsException();
             }
 
             // Find and read all datablocks for the file, if found successfully
