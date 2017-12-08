@@ -321,7 +321,8 @@ public class Ext2Reader extends JFrame implements ActionListener {
                                 totalCount++;
                             }
                             if (zeroCount > 0)
-                                JOptionPane.showMessageDialog(null, "Chose to read " + totalCount + " bytes in total.\n" + zeroCount + " byte(s) have no data.", 
+                                JOptionPane.showMessageDialog(null, 
+                                    "Chose to read " + totalCount + " bytes in total.\n" + zeroCount + " byte(s) have no data.", 
                                     "File Hole Detected", JOptionPane.PLAIN_MESSAGE);
 
                             // Append data to output area

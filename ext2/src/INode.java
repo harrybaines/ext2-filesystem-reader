@@ -264,8 +264,9 @@ public class INode extends DataBlock {
 
             // Append 0s to result data if zeros precede data
             if (indirectionLevel == levelToReach) {
-                if (p == 0 && !firstBlockHasData)
-                    allDataBlocks.add((byte)0);
+                if (p == 0 && !firstBlockHasData) {
+                    allDataBlocks.add((byte)0);         // Each preceding 0 represents a single block with no data
+                }
             }
 
             // If pointer points to data

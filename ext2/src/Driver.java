@@ -68,7 +68,7 @@ public class Driver {
         doubleStart.printFileContents(doubleStart.read(0L, 275));
 
         Ext2File doubleEnd = new Ext2File(vol, "/files/dbl-ind-e");
-        doubleEnd.printFileContents(doubleEnd.read(0L, 275));           // Value beyond this would return 0's - no data written yet
+        doubleEnd.printFileContents(doubleEnd.read(0L, 275));           
 
         Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
         tripleStart.printFileContents(tripleStart.read(0L, 275));
