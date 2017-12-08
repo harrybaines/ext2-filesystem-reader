@@ -7,7 +7,7 @@ import java.awt.event.*;
 /**
  * Title: Ext2Reader
  *
- * This class provides an implmentation of a custom GUI to read information from a given volume.
+ * This class provides an implmentation of a custom GUI to read information from a given volume for a file system.
  * The user can view various file system information and can dynamically view different directories and file contents.
  *
  * @author Harry Baines
@@ -54,6 +54,9 @@ public class Ext2Reader extends JFrame implements ActionListener {
     private boolean viewHexAscii;               /* Monitors if user is currently viewing in hex and ASCII format */
     private long readLength;                    /* The length of data the user wishes to read in files */
 
+    private JTextField entryLength;             /* Text input to change the read length when reading file contents */
+    private JPanel panel;                       /* Panel to display components to the user */
+
     /**
      * Constructor to initialise all the components on the UI and present the window to the user.
      * @param vol The reference to the volume upon which this frame will read data.
@@ -65,7 +68,7 @@ public class Ext2Reader extends JFrame implements ActionListener {
         this.viewHexAscii = false;
         this.h = new Helper();
         this.groupDescriptors = Ext2Reader.this.vol.getGroupDescriptors();
-        this.readLength = 2000;   // 2000 by default, but user can change
+        this.readLength = 275;   // 275 by default, but user can change - would return 0s for no data
 
         // Initialise panels
         mainPanel = new JPanel(new BorderLayout());
@@ -301,7 +304,7 @@ public class Ext2Reader extends JFrame implements ActionListener {
 
                     // View regular file contents
                     else {
-                        if (fileChosen.getiNodeForFileToOpen() != null) {
+                        if (fileChosen.getiNode() != null) {
                             String stringToPrint = "";
 
                             // Append 0 for sparse files, otherwise add char equivalent
@@ -321,6 +324,7 @@ public class Ext2Reader extends JFrame implements ActionListener {
                                 JOptionPane.showMessageDialog(null, "Chose to read " + totalCount + " bytes in total.\n" + zeroCount + " byte(s) have no data.", 
                                     "File Hole Detected", JOptionPane.PLAIN_MESSAGE);
 
+                            // Append data to output area
                             textArea.append(new String(stringToPrint));
                         }
                         else
@@ -421,24 +425,24 @@ public class Ext2Reader extends JFrame implements ActionListener {
             // Set read length entry
             else if (e.getSource() == setReadItem) {
 
-                JTextField entryLength = new JTextField(Long.toString(readLength));
-                JPanel panel = new JPanel(new GridLayout(0, 1));
+                // Initialise UI components
+                entryLength = new JTextField(Long.toString(readLength));
+                panel = new JPanel(new GridLayout(0, 1));
                 panel.add(new JLabel("New Read Length:"));
                 panel.add(entryLength);
 
+                // Obtain user input for read length
                 readLength = 0;
                 while (readLength == 0) {
                     int opt = JOptionPane.showConfirmDialog(null, panel, "Set Read Length", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
                     readLength = Long.parseLong(entryLength.getText()); 
 
+                    // Validation
                     if (opt == JOptionPane.OK_OPTION) {
                         if (readLength <= 0) {
                             JOptionPane.showMessageDialog(null, "Please enter a length greater than 0.", "Length Error", JOptionPane.PLAIN_MESSAGE);
                             readLength = 0;
                         }
-
-                    } else {
-                        System.out.println("Cancelled");
                     }
                 }
             }

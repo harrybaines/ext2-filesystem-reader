@@ -1,6 +1,5 @@
 package ext2;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -71,7 +70,7 @@ public class Helper {
                 else {
                     // Obtain ASCII equivalent of given byte in array
                     int asciiInt = bytes[(count-16) + i];
-                    asciiString += (asciiInt >= 32 && asciiInt < 127) ? (char) asciiInt : ".";                    
+                    asciiString += (asciiInt >= 32 && asciiInt < 127) ? (char) asciiInt : "_";                    
                 }
 
                 if (i == 7 || i == 15)
@@ -83,17 +82,6 @@ public class Helper {
             hexBytesString += hexString + asciiString;
             System.out.print(hexString + asciiString);
         }
-        System.out.println("----------\n");
-    }
-
-    /**
-     * Prints out the dynamic list of pointer integers specified by the user.
-     * @param pointers The dynamic list of pointers to print.
-     */
-    public void printPointers(List<Integer> pointers) {
-        System.out.println("----------");
-        for (int i : pointers)
-           System.out.println("pointer: " + i);
         System.out.println("----------\n");
     }
 
@@ -131,13 +119,41 @@ public class Helper {
         System.out.println("----------");
         System.out.println("File mode:                              0x" + String.format("%02X ", iNode.getFileMode()));
         System.out.println("User ID:                                "   + iNode.getUserID());
-        System.out.println("File Size (bytes):                      "   + iNode.getLowerFileSize());
+        System.out.println("Total File Size (bytes):                "   + iNode.getTotalFileSize());
         System.out.println("Last Access Time:                       "   + iNode.getLastAccessTime());
         System.out.println("Creation Time:                          "   + iNode.getCreationTime());
         System.out.println("Last Modified Time:                     "   + iNode.getLastModifiedTime());
         System.out.println("Deleted Time:                           "   + iNode.getDeletedTime());
         System.out.println("Group ID of owner:                      "   + iNode.getGroupID());
         System.out.println("Number of hard links referencing file:  "   + iNode.getNumHardLinks());
+        System.out.println("----------\n");
+    }
+
+    /**
+     * Outputs useful information for a particular Ext2File passed in.
+     * @param ext The Ext2File instance to print information for.
+     */
+    public void printFileInfo(Ext2File ext) {
+        System.out.println("\n----------");
+        System.out.println("File " + ext.getFilenameString() + " information: ");
+        System.out.println("----------");
+        System.out.println("iNode Number:                   " + ext.getiNode().getINodeNumber());
+        System.out.println("iNode Table Pointer:            " + ext.getiNode().getiNodeTblPointer());
+        System.out.println("iNode Table Offset (bytes):     " + ext.getiNode().getiNodeTblOffset());
+        System.out.println("Byte Offset into iNode Table:   " + ext.getiNode().getiNodeOffsetInTbl());
+        System.out.println("Byte Offset into Volume:        " + ext.getiNode().getOffsetInVol());
+        System.out.println("Total File Size (bytes):        " + ext.getiNode().getTotalFileSize());
+        System.out.println("----------\n");
+    }
+
+    /**
+     * Prints out the dynamic list of pointer integers specified by the user.
+     * @param pointers The dynamic list of pointers to print.
+     */
+    public void printPointers(List<Integer> pointers) {
+        System.out.println("----------");
+        for (int i : pointers)
+           System.out.println("pointer: " + i);
         System.out.println("----------\n");
     }
 

@@ -15,14 +15,14 @@ import java.nio.ByteOrder;
  */
 public class SuperBlock extends DataBlock {
 
-    public static final int NUM_INODE_OFFSET = 0;             /* Offset, in bytes, for number of iNodes */
-    public static final int NUM_BLOCKS_OFFSET = 4;            /* Offset, in bytes, for number of blocks */
-    public static final int BLOCK_SIZE_OFFSET = 24;           /* Offset, in bytes, for block size */
+    public static final int NUM_INODE_OFFSET        = 0;      /* Offset, in bytes, for number of iNodes */
+    public static final int NUM_BLOCKS_OFFSET       = 4;      /* Offset, in bytes, for number of blocks */
+    public static final int BLOCK_SIZE_OFFSET       = 24;     /* Offset, in bytes, for block size */
     public static final int BLOCKS_PER_GROUP_OFFSET = 32;     /* Offset, in bytes, for blocks per block group */
     public static final int INODES_PER_GROUP_OFFSET = 40;     /* Offset, in bytes, for iNodes per block group */
-    public static final int MAGIC_NUM_OFFSET = 56;            /* Offset, in bytes, for magic number */
-    public static final int INODE_SIZE_OFFSET = 88;           /* Offset, in bytes, for iNode size */
-    public static final int VOLUME_LBL_OFFSET = 120;          /* Offset, in bytes, for volume label */
+    public static final int MAGIC_NUM_OFFSET        = 56;     /* Offset, in bytes, for magic number */
+    public static final int INODE_SIZE_OFFSET       = 88;     /* Offset, in bytes, for iNode size */
+    public static final int VOLUME_LBL_OFFSET       = 120;    /* Offset, in bytes, for volume label */
 
     private int totaliNodes;                                  /* The total number of iNodes in the file system */
     private int totalBlocks;                                  /* The total number of blocks in the file system */

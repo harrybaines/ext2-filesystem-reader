@@ -1,8 +1,5 @@
 package ext2;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
 /**
  * Name: Driver
  *
@@ -31,7 +28,6 @@ public class Driver {
         h.printSuperblockInfo(vol.getSuperblock());
         h.printFurtherSuperBlockInfo(vol.getSuperblock());
 
-
         /* CREATE NEW FILE INSTANCES */
         // 1. Create new file
         // 2. Print directory information
@@ -39,43 +35,48 @@ public class Driver {
         Ext2File twoCities = new Ext2File(vol, "/two-cities");
         twoCities.printDirectoryInfo();
         twoCities.seek(20);
-        byte twoCitiesBuf[] = twoCities.read(twoCities.getPosition(), twoCities.getSize() + 10);
+        byte twoCitiesBuf[] = twoCities.read(0L, twoCities.getSize());
         twoCities.printFileContents(twoCitiesBuf);
-
-        //h.printINodeInfo(twoCities.getiNodeForFileToOpen().getINode());
+        h.printINodeInfo(twoCities.getiNode());
+        h.dumpHexBytes(twoCitiesBuf);
+        h.printFileInfo(twoCities);
 
         Ext2File deepDownFile = new Ext2File(vol, "/deep/down/in/the/filesystem/there/lived/a/file");
         deepDownFile.printDirectoryInfo();
         byte deepDownBuf[] = deepDownFile.read(0L, deepDownFile.getSize());
-        //h.dumpHexBytes(deepDownBuf);
+        h.dumpHexBytes(deepDownBuf);
         deepDownFile.printFileContents(deepDownBuf);
+
+        Ext2File bigDir = new Ext2File(vol, "/big-dir");
+        bigDir.printDirectoryInfo();
 
         Ext2File dirStart = new Ext2File(vol, "/files/dir-s");
         dirStart.printDirectoryInfo();
-        dirStart.printFileContents(dirStart.read(0L, 50));
+        dirStart.printFileContents(dirStart.read(0L, dirStart.getSize()));
+        h.printFileInfo(dirStart);
 
         Ext2File dirEnd = new Ext2File(vol, "/files/dir-e");
-        dirEnd.printFileContents(dirEnd.read(0L, 50));
+        dirEnd.printFileContents(dirEnd.read(0L, 20));
 
         Ext2File indStart = new Ext2File(vol, "/files/ind-s");
-        indStart.printFileContents(indStart.read(0L, 50));
+        indStart.printFileContents(indStart.read(0L, 275));
 
         Ext2File indEnd = new Ext2File(vol, "/files/ind-e");
-        indEnd.printFileContents(indEnd.read(0L, 50));
+        indEnd.printFileContents(indEnd.read(0L, 268));
 
         Ext2File doubleStart = new Ext2File(vol, "/files/dbl-ind-s");
-        doubleStart.printFileContents(doubleStart.read(0L, 50));
+        doubleStart.printFileContents(doubleStart.read(0L, 275));
 
         Ext2File doubleEnd = new Ext2File(vol, "/files/dbl-ind-e");
-        doubleEnd.printFileContents(doubleEnd.read(0L, 50));
+        doubleEnd.printFileContents(doubleEnd.read(0L, 275));           // Value beyond this would return 0's - no data written yet
 
         Ext2File tripleStart = new Ext2File(vol, "/files/trpl-ind-s");
-        tripleStart.printFileContents(tripleStart.read(0L, 50));
+        tripleStart.printFileContents(tripleStart.read(0L, 275));
 
         Ext2File tripleEnd = new Ext2File(vol, "/files/trpl-ind-e");
-        tripleEnd.printFileContents(tripleEnd.read(0L, 50));
+        tripleEnd.printFileContents(tripleEnd.read(0L, 275));
 
-        System.out.println("Time to open all files: " + (System.currentTimeMillis() - startTime) + "ms\n");
+        System.out.println("Time to complete: " + (System.currentTimeMillis() - startTime) + "ms\n");
 
         // Create new GUI instance
         Ext2Reader e = new Ext2Reader(vol);

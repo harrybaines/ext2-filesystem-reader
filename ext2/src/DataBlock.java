@@ -1,7 +1,6 @@
 package ext2;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /**
  * Name: DataBlock
@@ -13,8 +12,7 @@ import java.nio.ByteOrder;
  */
 public abstract class DataBlock {
     
-    private Volume vol;                 /* Volume reference which this data block is part of */
-    private ByteBuffer byteBuffer;      /* Byte buffer to store all bytes for this data block */
+    private Volume vol;       /* Volume reference which this data block is part of */
 
     /** 
      * Constructor to initialise a data block represented inside a given volume.
@@ -34,15 +32,14 @@ public abstract class DataBlock {
      */
     public byte[] readBlock(long startByte, long length) {
 
-        byteBuffer = ByteBuffer.allocate((int) length);
+        // Obtain entire buffer and read portion of this into new arrays
+        ByteBuffer buf = this.vol.getByteBuffer();
+        byte[] byteArray = new byte[(int) length];
 
-        // Read specified portion of bytes from volume byte buffer
-        for (int curByte = 0; curByte < byteBuffer.limit(); curByte++) {
-            byteBuffer.put(this.vol.getByteBuffer().get((int) startByte));
-            startByte++;
-        }
-
-        return byteBuffer.array();
+        // Transfer specified length of bytes into array
+        buf.position((int) startByte);
+        buf.get(byteArray);
+        return byteArray;
     }
 
     /** 

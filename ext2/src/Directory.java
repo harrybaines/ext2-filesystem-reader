@@ -44,7 +44,7 @@ public class Directory extends DataBlock {
      * Each directory contains relevant information to that directory.
      * The output is presented in a Unix-like format.
      *
-     * @return An array of directory strings.
+     * @return A dynamic list of directory strings.
      */
     public List<String> getFileInfo() {
 

@@ -5,6 +5,7 @@ import java.nio.ByteOrder;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import java.util.Date;
 import java.text.SimpleDateFormat;
@@ -27,7 +28,7 @@ public class INode extends DataBlock {
 
     public static final char[] permissions = { 'r', 'w', 'x' };    /* User/Group/Others can Read/Write/Execute */
 
-    /* OFFSETS */
+    /* OFFSET CONSTANTS */
     public static final int FILE_MODE_OFFSET       = 0;     /* Offset, in bytes, for the file mode */
     public static final int USER_ID_LOWER_OFFSET   = 2;     /* Offset, in bytes, for the lower 16 bits of the user ID */
     public static final int FILE_SIZE_LOWER_OFFSET = 4;     /* Offset, in bytes, for the lower 16 bits of the file size */
@@ -43,7 +44,7 @@ public class INode extends DataBlock {
     public static final int DBL_INDIRECT_OFFSET    = 92;    /* Offset, in bytes, for the double indirect pointer */
     public static final int TRPL_INDIRECT_OFFSET   = 96;    /* Offset, in bytes, for the triple indirect pointer */
     public static final int FILE_SIZE_UPPER_OFFSET = 108;   /* Offset, in bytes, for the upper 32 bits of the file size */
-    public static final int BYTE_BLOCK_SIZE        = 512;   /* Total number of bytes for the number of 512 byte blocks field */
+    public static final int NUM_DIRECT_POINTERS    = 12;    /* Total number of direct pointers in the iNode */
 
     /* INODE FIELDS */
     private short fileMode;                                 /* File mode field */
@@ -56,12 +57,16 @@ public class INode extends DataBlock {
     private short groupIDLower;                             /* Lower 16 bits of group ID field */
     private short numHardLinks;                             /* Number of hard links field */
     private int num512ByteBlocks;                           /* Number of 512 byte blocks field */
-    private List<Integer> directPointers;                   /* List of direct pointers field */
     private int singleIndirectP;                            /* Single indirect pointer field */
     private int doubleIndirectP;                            /* Double indirect pointer field */
     private int tripleIndirectP;                            /* Triple indirect pointer field */
     private int fileSizeUpper;                              /* Upper 16 bits of file size field */
     private long totalFileSize;                             /* Total file size */
+    private List<Integer> directPointers;                   /* Dynamic list of all direct pointers */
+
+    private long iNodeTblOffset;                            /* Stores the offset, in bytes where the iNode table can be located */
+    private long iNodeOffsetInTbl;                          /* Stores the offset, in bytes the iNode is in the iNode table */
+    private long offsetInVol;                               /* Stores the offset, in bytes where iNode can be located in the volume */
 
     private ByteBuffer iNodeBuffer;                         /* Byte buffer to store the bytes in the iNode */
     private byte[] iNodeBytes;                              /* Array to store all bytes in the iNode */
@@ -72,9 +77,11 @@ public class INode extends DataBlock {
 
     private int groupNum;                                   /* The group number this iNode belongs in */
     private int iNodeNumber;                                /* The number for this iNode */
-    private int iNodeOffset;                                /* The offset, in bytes, that the iNode is at in the filsystem */
+    private long iNodeOffset;                               /* The offset, in bytes, that the iNode is at in the filsystem */
     private int levelToReach;                               /* Final level of indirection to reach to obtain data block pointers */
     private List<Integer> blockPointers;                    /* Dynamic list of final data block pointers */
+    private List<Byte> allDataBlocks;                       /* Array list to store all relevant data blocks for the file */
+    private boolean firstBlockHasData;                      /* Boolean to track if the first block at level of indirection has a valid block pointer */
 
     /**
      * Constructor to initialise an iNode with the relevant fields.
@@ -94,6 +101,7 @@ public class INode extends DataBlock {
         this.groupNum = groupNum;
         this.superBlock = superBlock;
         this.iNodeOffset = this.calculateiNodeByteOffset(iNodeTblPointer, iNodeNumber, groupNum);
+        firstBlockHasData = false;
 
         // Create array of bytes for this iNode
         iNodeBytes = this.readBlock(iNodeOffset, superBlock.getiNodeSize());
@@ -143,8 +151,18 @@ public class INode extends DataBlock {
      * @param groupNum The block group in which this iNode belongs.
      * @return The offset in bytes in the filesystem for this iNode.
      */
-    public int calculateiNodeByteOffset(int iNodeTblPointer, int iNodeNumber, int groupNum) {
-        return ((iNodeTblPointer * superBlock.getBlockSize()) + (((iNodeNumber-1) - (groupNum * superBlock.getiNodesPerGroup())) * superBlock.getiNodeSize()));
+    private long calculateiNodeByteOffset(int iNodeTblPointer, int iNodeNumber, int groupNum) {
+
+        // Obtain byte offset for iNode table pointer
+        iNodeTblOffset = iNodeTblPointer * superBlock.getBlockSize();
+
+        // Obtain iNode byte offset in the iNode table
+        iNodeOffsetInTbl = (((iNodeNumber - 1) - (groupNum * superBlock.getiNodesPerGroup())) * superBlock.getiNodeSize());
+
+        // Finally, obtain byte offset in volume
+        offsetInVol = iNodeTblOffset + iNodeOffsetInTbl;
+
+        return offsetInVol;
     }
 
     /**
@@ -158,7 +176,7 @@ public class INode extends DataBlock {
         int indirectionLevel = 0;
 
         // Get all data blocks using just direct pointers from this iNode
-        List<Byte> allDataBlocks = this.getDataBlocks(this.directPointers);
+        allDataBlocks = this.getDataBlocks(this.directPointers);
 
         // Find indirect pointers and search through blocks to find data blocks
         int singleIndirectPointer = this.getIndirectPointer();                    // Initial indirect pointer in iNode
@@ -185,61 +203,6 @@ public class INode extends DataBlock {
     }
 
     /**
-     * Method which adds data blocks to the passed dynamic list of bytes.
-     * This method first calls getPointersByIndirectionLevel() based on the level passed.
-     * Then using these pointers, the relevant data blocks are added to the dynamic list.
-     *
-     * @param indirectPointer The initial indirect pointer that points to the first block of indirect pointers.
-     * @param indLevel The level of indirection the method should traverse up to.
-     * @param allDataBlocks The dynamic list of data bytes from data blocks.
-     */
-    private void addDataBlocksForInitialPointer(int indirectPointer, int indLevel, List<Byte> allDataBlocks) {
-
-        this.levelToReach = indLevel;
-
-        // Stores all pointers found that aren't 0
-        blockPointers = new ArrayList<Integer>();
-
-        // Obtains all non-0 pointers from 'indLevel' levels of indirection, given an initial indirect pointer 
-        List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(1, this.getIndirectBlockPointers(indirectPointer));
-
-        // Transfer all found data from indirect pointers into 'master' list
-        for (byte b : this.getDataBlocks(pointersFromIndirectionLevel))
-            if (b != 0)
-                allDataBlocks.add(b);
-    }
-
-    /**
-     * Method to traverse the file system given the an initial level of indirection.
-     * This method is recursive and is given an initial list of indirection pointers to begin the traversal.
-     *
-     * @param indirectionLevel The levels of indirection to traverse.
-     * @param indirectTableBlockPointers The initial dynamic list of pointers to begin traversal.
-     * @return The dynamic list of pointers to blocks found from the traversal.
-     */
-    private List<Integer> getPointersByIndirectionLevel(int indirectionLevel, List<Integer> indirectTableBlockPointers) {
-
-        // Iterate over block of pointers at given level of recursion
-        for (int p : indirectTableBlockPointers) {
-
-            // If pointer points to data
-            if (p != 0) {
-
-                indirectionLevel++;
-
-                // Add data block pointer to final list
-                if (indirectionLevel > levelToReach) 
-                    blockPointers.add(p);
-
-                // Recurse until final indirection level is met
-                else
-                    getPointersByIndirectionLevel(indirectionLevel, this.getIndirectBlockPointers(p));
-            }   
-        }
-        return blockPointers;
-    }
-
-    /**
      * Obtains a dynamic list of data blocks given a set of block pointers.
      *
      * @param pointers Dynamic list of pointers that point to data blocks.
@@ -263,20 +226,65 @@ public class INode extends DataBlock {
     }
 
     /**
-     * Retrieves the 12 4-byte integer direct data block pointers, directly from the iNode.
-     * @return An array of the 12 direct data block pointers.
+     * Method which adds data blocks to the passed dynamic list of bytes.
+     * This method first calls getPointersByIndirectionLevel() based on the level passed.
+     * Then using these pointers, the relevant data blocks are added to the dynamic list.
+     *
+     * @param indirectPointer The initial indirect pointer that points to the first block of indirect pointers.
+     * @param indLevel The level of indirection the method should traverse up to.
+     * @param allDataBlocks The dynamic list of data bytes from data blocks.
      */
-    private List<Integer> getDirectPointers() {
+    private void addDataBlocksForInitialPointer(int indirectPointer, int indLevel, List<Byte> allDataBlocks) {
 
-        List<Integer> directPointers = new ArrayList<Integer>();
+        this.levelToReach = indLevel;
 
-        // Transfer direct pointers to dynamic list
-        int count = 0;
-        while (count < 12) {
-            directPointers.add(iNodeBuffer.getInt(DIRECT_POINTERS_OFFSET + (Integer.BYTES * count)));
-            count++;
+        // Stores all pointers found that aren't 0
+        blockPointers = new ArrayList<Integer>();
+
+        // Obtains all non-0 pointers from 'indLevel' levels of indirection, given an initial indirect pointer 
+        List<Integer> pointersFromIndirectionLevel = this.getPointersByIndirectionLevel(1, this.getIndirectBlockPointers(indirectPointer));
+
+        // Transfer all found data from indirect pointers into 'master' list
+        for (byte b : this.getDataBlocks(pointersFromIndirectionLevel))
+            allDataBlocks.add(b);
+    }
+
+    /**
+     * Method to traverse the file system given the an initial level of indirection.
+     * This method is recursive and is given an initial list of indirection pointers to begin the traversal.
+     *
+     * @param indirectionLevel The levels of indirection to traverse.
+     * @param indirectTableBlockPointers The initial dynamic list of pointers to begin traversal.
+     * @return The dynamic list of pointers to blocks found from the traversal.
+     */
+    private List<Integer> getPointersByIndirectionLevel(int indirectionLevel, List<Integer> indirectTableBlockPointers) {
+
+        // Iterate over block of pointers at given level of recursion
+        for (int p : indirectTableBlockPointers) {
+
+            // Append 0s to result data if zeros precede data
+            if (indirectionLevel == levelToReach) {
+                if (p == 0 && !firstBlockHasData)
+                    allDataBlocks.add((byte)0);
+            }
+
+            // If pointer points to data
+            if (p != 0) {
+
+                indirectionLevel++;
+
+                // Add data block pointer to final list
+                if (indirectionLevel > levelToReach)  {
+                    blockPointers.add(p);
+                }
+
+                // Recurse until final indirection level is met
+                else {
+                    getPointersByIndirectionLevel(indirectionLevel, this.getIndirectBlockPointers(p));
+                }
+            }  
         }
-        return directPointers;
+        return blockPointers;
     }
 
     /**
@@ -291,16 +299,40 @@ public class INode extends DataBlock {
 
         // Obtains bytes for the indirect table of block pointers
         byte[] indirectTableBytes = this.readBlock(blockNum * superBlock.getBlockSize(), superBlock.getBlockSize());
+
         ByteBuffer indirectBuffer = ByteBuffer.wrap(indirectTableBytes);
         indirectBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
         // Iterate over the indirect table block size
         int count = 0;
         while (count < indirectBlockSize) {
-            indirectPointers.add(indirectBuffer.getInt(Integer.BYTES * count));
+
+            // Obtain pointer
+            int p = indirectBuffer.getInt(Integer.BYTES * count);
+            if (p != 0 && count == 0)
+                firstBlockHasData = true;
+
+            // Add to list
+            indirectPointers.add(p);
             count++;
         }
         return indirectPointers;
+    }
+
+    /**
+     * Retrieves the 12 4-byte integer direct data block pointers, directly from the iNode.
+     * @return A list of the 12 direct data block pointers.
+     */
+    private List<Integer> getDirectPointers() {
+
+        directPointers = new ArrayList<Integer>(NUM_DIRECT_POINTERS);
+
+        // Transfer direct pointers to list
+        int count = 0;
+        while (count < NUM_DIRECT_POINTERS)
+            directPointers.add(iNodeBuffer.getInt(DIRECT_POINTERS_OFFSET + (Integer.BYTES * count++)));
+
+        return directPointers;
     }
 
     /**
@@ -444,19 +476,35 @@ public class INode extends DataBlock {
         return this.iNodeNumber;
     }
 
-    /** 
-     * Method to obtain all iNode fields in the form of a byte array.
-     * @return Array of bytes containing the iNode fields.
+    /**
+     * Method to retrieve iNode table offset in bytes.
+     * @return The iNode table offset.
      */
-    public byte[] getINodeInfoBytes() {
-        return this.iNodeBytes;
+    public long getiNodeTblOffset() {
+        return this.iNodeTblOffset;
     }
 
     /**
-     * Returns the current instance of this iNode.
-     * @return This iNode instance;
+     * Method to retrieve iNode offset in bytes into the iNode table.
+     * @return The iNode offset in the iNode table.
      */
-    public INode getINode() {
-        return this;
+    public long getiNodeOffsetInTbl() {
+        return this.iNodeOffsetInTbl;
+    }
+
+    /**
+     * Method to retrieve the total byte offset where the iNode can be located in the volume.
+     * @return The total byte offset in the volume.
+     */
+    public long getOffsetInVol() {
+        return this.offsetInVol;
+    }
+
+    /**
+     * Method to retrieve the iNode table pointer in which this iNode belongs.
+     * @return The iNode table pointer.
+     */
+    public int getiNodeTblPointer() {
+        return this.iNodeTblPointer;
     }
 }
