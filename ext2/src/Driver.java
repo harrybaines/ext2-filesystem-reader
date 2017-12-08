@@ -50,6 +50,9 @@ public class Driver {
         Ext2File bigDir = new Ext2File(vol, "/big-dir");
         bigDir.printDirectoryInfo();
 
+        // NOTE: Each 0 in the output represents a single data block containing no data
+        // Going beyond the range or reading file holes would give a 0 in the output = 1 data block
+        // (very large files would return large numbers of 0s and would take time to print)
         Ext2File dirStart = new Ext2File(vol, "/files/dir-s");
         dirStart.printDirectoryInfo();
         dirStart.printFileContents(dirStart.read(0L, dirStart.getSize()));
